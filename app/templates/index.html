@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    
+    <div class="flex justify-end mb-4">
+        <button id="new-booking-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            New Booking
+        </button>
+    </div>
+
+    <div id='calendar'></div>
+
+    <div id="booking-modal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-black opacity-50 absolute inset-0"></div>
+            <div class="bg-white rounded-lg p-8 z-20 w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-4">Create Booking</h2>
+                <form id="booking-form">
+                    <div class="mb-4">
+                        <label for="title" class="block text-gray-700">Title</label>
+                        <input type="text" id="title" name="title" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="start_time" class="block text-gray-700">Start Time</label>
+                        <input type="datetime-local" id="start_time" name="start_time" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="end_time" class="block text-gray-700">End Time</label>
+                        <input type="datetime-local" id="end_time" name="end_time" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="button" id="cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Create
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='node_modules/@fullcalendar/core/index.global.min.js') }}"></script>
+<script src="{{ url_for('static', filename='node_modules/@fullcalendar/daygrid/index.global.min.js') }}"></script>
+<script src="{{ url_for('static', filename='node_modules/@fullcalendar/timegrid/index.global.min.js') }}"></script>
+<script src="{{ url_for('static', filename='node_modules/@fullcalendar/interaction/index.global.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}

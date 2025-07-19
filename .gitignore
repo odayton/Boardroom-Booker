@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# Instance Folder
+/instance/
+
+# Environment Variables & Secrets
+.env
+*.env
+
+# Frontend Dependencies
+/node_modules/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.DS_Store
+
+# Build artifacts
+/dist/
+/build/
+*.egg-info/

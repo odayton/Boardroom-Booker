@@ -7,8 +7,9 @@ __pycache__/
 env/
 venv/
 
-# Instance Folder
+# Instance & Session Folder
 /instance/
+flask_session/
 
 # Environment Variables & Secrets
 .env
@@ -20,7 +21,7 @@ venv/
 # IDE / Editor specific
 .vscode/
 .idea/
-*.DS_Store
+.DS_Store
 
 # Build artifacts
 /dist/

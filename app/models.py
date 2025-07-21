@@ -8,9 +8,9 @@ class Booking(db.Model):
     title = db.Column(db.String(120), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=False)
+    organizer_name = db.Column(db.String(120))
     organizer_email = db.Column(db.String(120))
-    google_calendar_event_id = db.Column(db.String(255))
-    microsoft_calendar_event_id = db.Column(db.String(255))
+    
 
     def __repr__(self):
         return f'<Booking {self.title}>'

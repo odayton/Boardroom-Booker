@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // --- DOM Element Selection ---
     const calendarEl = document.getElementById('calendar');
     const authModal = document.getElementById('auth-modal');
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         els.btn.addEventListener('click', (e) => {
             e.stopPropagation();
             Object.values(timePickerElements).forEach(item => {
-                if(item.dropdown !== els.dropdown) {
+                if (item.dropdown !== els.dropdown) {
                     item.dropdown.classList.add('hidden');
                 }
             });
@@ -80,10 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
             right: 'prev,next today'
         },
         views: {
-            dayGridDay:  { buttonText: 'Day' },
-            timeGridWeek: {
-                buttonText: 'Week',
-            },
+            dayGridDay: { buttonText: 'Day' },
+            timeGridWeek: { buttonText: 'Week' },
             dayGridMonth: { buttonText: 'Month' }
         },
         firstDay: 1,
@@ -91,19 +89,14 @@ document.addEventListener('DOMContentLoaded', function() {
         allDaySlot: false,
         slotMinTime: '06:00:00',
         slotMaxTime: '18:00:00',
-        
-        // --- THIS IS THE KEY CHANGE ---
-        height: 'auto', 
-        contentHeight: 'auto',
-
+        slotDuration: '00:30:00',      // grid lines every 30 minutes
+        slotLabelInterval: '01:00',    // label every hour
         dayHeaderFormat: {
             weekday: 'short',
             day: '2-digit',
             month: '2-digit',
             omitCommas: true
         },
-        slotDuration: '00:15:00',
-        slotLabelInterval: '01:00',
         titleFormat: {
             day: '2-digit',
             month: '2-digit',
@@ -112,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
         events: '/api/bookings',
         editable: true,
         selectable: true,
-        select: function(info) {
+        select: function (info) {
             const startDate = info.start;
             const endDate = info.end;
             bookingForm.querySelector('#booking_date').value = formatDate(startDate);
@@ -130,14 +123,12 @@ document.addEventListener('DOMContentLoaded', function() {
             showModal(bookingModal);
             bookingForm.querySelector('#title').focus();
         },
-        eventContent: function(arg) {
+        eventContent: function (arg) {
             const timeFormat = { hour: 'numeric', minute: '2-digit', hour12: true };
             const startTime = arg.event.start.toLocaleTimeString('en-US', timeFormat).replace(' ', '');
             const endTime = arg.event.end ? arg.event.end.toLocaleTimeString('en-US', timeFormat).replace(' ', '') : '';
-
             let organizer = arg.event.extendedProps.organizer || '';
             let title = arg.event.title;
-
             let eventHtml = `
                 <div class="p-1 overflow-hidden">
                     <b class="font-semibold">${title}</b>
@@ -149,7 +140,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function setCalendarHeight() {
+        calendar.setOption('height', '100%');
+    }
+
     calendar.render();
+    calendar.setOption('contentHeight', 700); // 24 slots × 40px
 
     // --- Modal Control Functions ---
     const showModal = (modal) => modal.classList.remove('hidden');
@@ -163,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     authModalOverlay.addEventListener('click', () => hideModal(authModal));
     bookingModalCloseBtn.addEventListener('click', () => hideModal(bookingModal));
     bookingModalOverlay.addEventListener('click', () => hideModal(bookingModal));
-    newBookingBtn.addEventListener('click', function() {
+    newBookingBtn.addEventListener('click', function () {
         const now = new Date();
         const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
         bookingForm.querySelector('#booking_date').value = formatDate(now);
@@ -182,8 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingForm.querySelector('#title').focus();
     });
 
-    // --- Booking Form Submission ---
-    bookingForm.addEventListener('submit', function(e) {
+    bookingForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const formData = new FormData(bookingForm);
         const date = formData.get('booking_date');
@@ -198,26 +193,33 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         fetch('/api/bookings/new', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bookingData),
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                hideModal(bookingModal);
-                bookingForm.reset();
-                calendar.refetchEvents();
-                alert('Booking created successfully!');
-            } else {
-                alert('Error: ' + data.error);
-            }
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    hideModal(bookingModal);
+                    bookingForm.reset();
+                    calendar.refetchEvents();
+                    alert('Booking created successfully!');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Something went wrong while creating the booking.');
+            });
     });
 
     // Global click listener to close all dropdowns
-    document.addEventListener('click', function() {
+    document.addEventListener('click', function () {
         Object.values(timePickerElements).forEach(item => {
             item.dropdown.classList.add('hidden');
         });
     });
+
+    // Recalculate calendar height on window resize
+    window.addEventListener('resize', setCalendarHeight);
 });

@@ -9,6 +9,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
+
+    <style>
+        /* 1. Create a flex container that controls the overall component height */
+        .calendar-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 85vh; /* You can adjust this value (e.g., 80vh, 90vh) to make the whole component taller or shorter */
+        }
+
+        /* 2. Style the header box */
+        .calendar-wrapper .fc-header-toolbar {
+            flex-shrink: 0; /* Prevents the header from shrinking */
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 3. Style the grid box and make it fill the remaining space */
+        .calendar-wrapper .fc-view-harness {
+            flex-grow: 1; /* Allows the grid to grow and fill available space */
+            min-height: 0; /* A flexbox trick to allow shrinking below content size */
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1rem;
+        }
+
+        /* Make the inner grid transparent so the wrapper's style shows through */
+        .fc-theme-standard .fc-scrollgrid {
+            border: none !important; 
+        }
+        .fc .fc-view {
+             background-color: transparent !important;
+        }
+    </style>
 </head>
 <body class="font-sans bg-slate-50 text-slate-800">
 

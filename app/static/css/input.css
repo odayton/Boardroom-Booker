@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.fc {
+    font-size: 1.1rem;
+}
+
+.calendar-outer {
+    height: 960px; /* 960px grid + ~120px header */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    max-width: 98vw;
+    box-sizing: border-box;
+}

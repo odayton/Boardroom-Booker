@@ -146,3 +146,20 @@ def new_booking():
         db.session.rollback()
         print(f"Error creating booking: {e}")
         return jsonify({'success': False, 'error': 'An unexpected error occurred.'}), 500
+
+@bp.route('/api/bookings/<int:booking_id>/update', methods=['POST'])
+def update_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    data = request.get_json()
+    booking.title = data['title']
+    booking.start_time = datetime.fromisoformat(data['start_time'])
+    booking.end_time = datetime.fromisoformat(data['end_time'])
+    db.session.commit()
+    return jsonify({'success': True})
+
+@bp.route('/api/bookings/<int:booking_id>/delete', methods=['POST'])
+def delete_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    db.session.delete(booking)
+    db.session.commit()
+    return jsonify({'success': True})

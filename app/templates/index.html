@@ -23,7 +23,6 @@
     </div>
 {% endblock %}
 
-
 {% block content %}
 <div class="calendar-outer">
     <div class="calendar-wrapper">
@@ -31,9 +30,9 @@
     </div>
 </div>
 
-
 {% include 'partials/_auth_modal.html' %}
 {% include 'partials/_booking_modal.html' %}
+{% include 'partials/_booking_details_modal.html' %}
 
 <script src="{{ url_for('static', filename='node_modules/@fullcalendar/core/index.global.min.js') }}"></script>
 <script src="{{ url_for('static', filename='node_modules/@fullcalendar/daygrid/index.global.min.js') }}"></script>

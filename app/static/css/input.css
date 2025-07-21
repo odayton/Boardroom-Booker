@@ -7,7 +7,7 @@
 }
 
 .calendar-outer {
-    height: 1080; /* 960px grid + ~120px header */
+    height: 1080px; /* 960px grid + ~120px header */
     margin-left: auto;
     margin-right: auto;
     padding-left: 0.5rem;

@@ -1,0 +1,57 @@
+<!-- Sidebar -->
+<div id="sidebar" class="fixed inset-y-0 left-0 z-[9999] w-64 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 ease-in-out border-r border-gray-200">
+    <div class="flex items-center justify-center h-16 px-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+        <h2 class="text-lg font-semibold text-white">Navigation</h2>
+    </div>
+    
+    <nav class="flex-1 px-6 py-6">
+        <div class="space-y-1">
+            <a href="{{ url_for('main.index') }}" class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 {% if request.endpoint == 'main.index' %}bg-blue-100 text-blue-700 border-r-2 border-blue-600{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Calendar
+            </a>
+            
+            {% if current_user.is_authenticated and current_user.is_admin() %}
+            <a href="{{ url_for('main.user_management') }}" class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 {% if request.endpoint == 'main.user_management' %}bg-blue-100 text-blue-700 border-r-2 border-blue-600{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+                User Management
+            </a>
+            
+            <a href="{{ url_for('main.room_management') }}" class="flex items-center px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 {% if request.endpoint == 'main.room_management' %}bg-blue-100 text-blue-700 border-r-2 border-blue-600{% endif %}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                Room Management
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    
+    {% if current_user.is_authenticated %}
+    <div class="p-6 border-t border-gray-200 bg-gray-50">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-md">
+                    <span class="text-sm font-semibold text-white">{{ current_user.name[0].upper() }}</span>
+                </div>
+            </div>
+            <div class="ml-3 flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ current_user.name }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ current_user.email }}</p>
+                {% if current_user.is_admin() %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+                    Admin
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Sidebar overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 z-[9998] bg-gray-600 bg-opacity-75 hidden backdrop-blur-sm"></div> 

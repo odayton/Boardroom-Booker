@@ -1,0 +1,13 @@
+/* Main CSS File - Imports all other CSS files */
+
+/* Base styles and reset */
+@import 'base.css';
+
+/* Layout utilities and components */
+@import 'layout.css';
+
+/* Component-specific styles */
+@import 'components.css';
+
+/* Additional styles */
+@import 'style.css'; 

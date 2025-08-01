@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const bookingModalCloseBtn = document.getElementById('booking-modal-close-btn');
     const authModalOverlay = document.getElementById('auth-modal-overlay');
     const bookingModalOverlay = document.getElementById('booking-modal-overlay');
-    const roomSelect = document.getElementById('room-select');
 
     // --- Details Modal Elements ---
     const bookingDetailsModal = document.getElementById('booking-details-modal');
@@ -52,28 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const formatDate = (date) => date.toISOString().slice(0, 10);
 
-    // --- Load Rooms Function ---
-    async function loadRooms() {
-        try {
-            const response = await fetch('/api/rooms');
-            if (!response.ok) {
-                throw new Error('Failed to load rooms');
-            }
-            const rooms = await response.json();
-            
-            roomSelect.innerHTML = '<option value="">Select a room</option>';
-            rooms.forEach(room => {
-                const option = document.createElement('option');
-                option.value = room.id;
-                option.textContent = room.name;
-                roomSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading rooms:', error);
-            roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
-        }
-    }
-
     // --- Time Picker Logic ---
     function generateHourSlots() {
         const slots = [];
@@ -99,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         slots.forEach(slot => {
             const option = document.createElement('a');
             option.href = '#';
-            option.className = 'block px-4 py-2 text-sm text-slate-700 hover:bg-indigo-100';
+            option.className = 'dropdown-item';
             option.textContent = slot.label;
             option.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -122,48 +99,83 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- Initialize Time Pickers ---
-    Object.keys(timePickerElements.new).forEach(type => {
-        setupDropdown(type, 'new', newBookingState);
-    });
-
-    Object.keys(timePickerElements.edit).forEach(type => {
-        setupDropdown(type, 'edit', editBookingState);
-    });
-
-    // --- Calendar Initialization ---
-    if (calendarEl) {
-        window.calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'timeGridWeek',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            slotMinTime: '06:00:00',
-            slotMaxTime: '18:00:00',
-            allDaySlot: false,
-            height: 'auto',
-            events: '/api/bookings',
-            selectable: true,
-            select: function(info) {
-                openNewBookingModal(info.start, info.end);
-            },
-            eventClick: function(info) {
-                currentEvent = info.event;
-                populateBookingDetails(info.event);
-                showModal(bookingDetailsModal);
-            },
-            eventDidMount: function(info) {
-                // Add custom styling for private bookings
-                if (info.event.extendedProps.is_public === false) {
-                    info.el.style.backgroundColor = '#6B7280';
-                    info.el.style.borderColor = '#6B7280';
-                }
-            }
+    // Initialize dropdowns for both "new" and "edit" modals
+    ['new', 'edit'].forEach(mode => {
+        const state = mode === 'new' ? newBookingState : editBookingState;
+        ['startHour', 'startMinute', 'endHour', 'endMinute'].forEach(type => {
+            setupDropdown(type, mode, state);
         });
-        window.calendar.render();
-    }
+    });
+
+    // --- FullCalendar Initialization ---
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+            left: 'dayGridDay,timeGridWeek,dayGridMonth',
+            center: 'title',
+            right: 'prev,next today'
+        },
+        views: {
+            dayGridDay: { buttonText: 'Day' },
+            timeGridWeek: { buttonText: 'Week' },
+            dayGridMonth: { buttonText: 'Month' }
+        },
+        firstDay: 1,
+        locale: 'en-AU',
+        allDaySlot: false, // Correctly set to false
+        slotMinTime: '06:00:00',
+        slotMaxTime: '18:00:00',
+        slotDuration: '00:30:00',
+        snapDuration: '00:15:00',
+        slotLabelInterval: '01:00',
+        dayHeaderFormat: {
+            weekday: 'short',
+            day: '2-digit',
+            month: '2-digit',
+            omitCommas: true
+        },
+        titleFormat: {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        },
+        events: '/api/bookings',
+        editable: true,
+        selectable: true,
+        select: function (info) {
+            openNewBookingModal(info.start, info.end);
+        },
+        eventContent: function (arg) {
+            const duration = (arg.event.end - arg.event.start) / (1000 * 60);
+            const isSmall = duration <= 30;
+            const timeFormat = { hour: 'numeric', minute: '2-digit', hour12: true };
+            const startTime = arg.event.start.toLocaleTimeString('en-US', timeFormat).replace(' ', '');
+            const endTime = arg.event.end ? arg.event.end.toLocaleTimeString('en-US', timeFormat).replace(' ', '') : '';
+
+            if (isSmall) {
+                return { html: `<div class="p-1 overflow-hidden"><b class="font-semibold">${arg.event.title}</b></div>` };
+            } else {
+                return {
+                    html: `
+                        <div class="p-1 overflow-hidden">
+                            <b class="font-semibold">${arg.event.title}</b>
+                            <div class="text-xs">${startTime} - ${endTime}</div>
+                            <div class="text-xs italic">${arg.event.extendedProps.organizer || ''}</div>
+                        </div>
+                    `
+                };
+            }
+        },
+        eventClick: function(info) {
+            currentEvent = info.event;
+            populateBookingDetails(info.event);
+            showModal(bookingDetailsModal);
+            info.jsEvent.preventDefault();
+        }
+    });
+
+    calendar.render();
+    calendar.setOption('contentHeight', 'auto');
 
     // --- Modal Control Functions ---
     const showModal = (modal) => modal.classList.add('show');
@@ -188,10 +200,6 @@ document.addEventListener('DOMContentLoaded', function () {
         timePickerElements.new.endMinute.text.textContent = newBookingState.endMinute;
         
         bookingForm.querySelector('#title').value = 'New Booking';
-        
-        // Load rooms when opening modal
-        loadRooms();
-        
         showModal(bookingModal);
         bookingForm.querySelector('#title').focus();
     }
@@ -206,28 +214,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bookingModalCloseBtn) bookingModalCloseBtn.addEventListener('click', () => hideModal(bookingModal));
     if (bookingModalOverlay) bookingModalOverlay.addEventListener('click', () => hideModal(bookingModal));
 
-
-
     if (bookingForm) bookingForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(bookingForm);
         const date = formData.get('booking_date');
-        const roomId = formData.get('room_id');
-        const isPublic = formData.get('is_public') === 'true';
-        
-        if (!roomId) {
-            alert('Please select a room');
-            return;
-        }
-        
         const bookingData = {
             title: formData.get('title'),
             start_time: `${date}T${newBookingState.startHour}:${newBookingState.startMinute}`,
             end_time: `${date}T${newBookingState.endHour}:${newBookingState.endMinute}`,
-            room_id: parseInt(roomId),
-            is_public: isPublic
         };
-        
         fetch('/api/bookings/new', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -242,10 +237,6 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 alert('Error: ' + data.error);
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while creating the booking');
         });
     });
 
@@ -259,14 +250,6 @@ document.addEventListener('DOMContentLoaded', function () {
         detailsTitle.textContent = event.title;
         detailsTime.textContent = `${startTime} - ${endTime}`;
         detailsOrganizer.textContent = event.extendedProps.organizer || '';
-
-        // Show/hide edit/delete buttons based on permissions
-        if (editBookingBtn) {
-            editBookingBtn.style.display = event.extendedProps.can_edit ? 'block' : 'none';
-        }
-        if (deleteBookingBtn) {
-            deleteBookingBtn.style.display = event.extendedProps.can_edit ? 'block' : 'none';
-        }
 
         // Reset to show details and hide edit form
         detailsView.classList.remove('hidden');
@@ -323,10 +306,6 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 alert('Error: ' + data.error);
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating the booking');
         });
     });
 
@@ -342,10 +321,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     alert('Error: ' + data.error);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the booking');
             });
         }
     });

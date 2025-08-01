@@ -4,27 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 </head>
-<body class="font-sans bg-slate-50 text-slate-800">
-    <nav class="bg-white border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <span class="font-bold text-xl text-indigo-600">Boardroom Booker</span>
-                </div>
-                <div class="flex items-center">
-                    {% block top_buttons %}{% endblock %}
+<body class="bg-gray-50">
+    <!-- Sidebar -->
+    {% if current_user.is_authenticated %}
+    {% include 'partials/_sidebar.html' %}
+    {% endif %}
+    
+    <!-- Main content area -->
+    <div class="min-h-screen flex flex-col">
+        <!-- Top navigation -->
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+            <div class="px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        {% if current_user.is_authenticated %}
+                        <button id="open-sidebar" class="lg:hidden text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100 mr-3" title="Toggle Sidebar">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                        {% endif %}
+                        <span class="text-xl font-semibold text-gray-900">Boardroom Booker</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        {% block top_buttons %}{% endblock %}
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+        </nav>
+        
+        <!-- Page content -->
+        <main class="flex-1 p-6">
+            <div class="max-w-7xl mx-auto">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/utils/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/modal.js') }}"></script>
+    
+    <!-- Sidebar JavaScript -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/components/sidebar.js') }}"></script>
+    {% endif %}
+    
+    {% block scripts %}{% endblock %}
 </body>
-</html>
+</html> 

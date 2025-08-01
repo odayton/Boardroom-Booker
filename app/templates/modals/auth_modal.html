@@ -1,0 +1,36 @@
+<!-- Auth Modal -->
+<div id="auth-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Authentication</h3>
+                <button id="close-auth-modal" class="btn-close">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 mb-4">
+                        <svg class="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600 text-lg">Please sign in to continue</p>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary flex-1">
+                        Sign In
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary flex-1">
+                        Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

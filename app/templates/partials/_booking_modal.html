@@ -1,58 +1,75 @@
-<div id="booking-modal" class="hidden fixed z-10 inset-0 overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen">
-        <div id="booking-modal-overlay" class="fixed inset-0 bg-black opacity-50"></div>
-
-        <div class="bg-white rounded-lg p-8 z-20 w-full max-w-md">
-            <div class="flex justify-between items-start mb-6">
-                <h2 class="text-2xl font-bold text-slate-800">Create a Booking</h2>
-                <button id="booking-modal-close-btn" class="text-3xl font-light text-slate-400 hover:text-slate-600 transition">&times;</button>
-            </div>
-            
-            <form id="booking-form" class="space-y-6">
-                <div>
-                    <label for="title" class="block text-sm font-medium text-slate-700">Event Title</label>
-                    <input type="text" id="title" name="title" class="mt-1 block w-full border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg p-3" required>
+<div id="booking-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Create a Booking</h2>
+            <button id="booking-modal-close-btn" class="modal-close">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="booking-form" class="space-y-4">
+                <div class="form-group">
+                    <label for="title" class="form-label">Event Title</label>
+                    <input type="text" id="title" name="title" class="form-input" required>
                 </div>
 
-                <div>
-                    <label for="booking_date" class="block text-sm font-medium text-slate-700">Date</label>
-                    <input type="date" id="booking_date" name="booking_date" class="mt-1 block w-full border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2" required>
+                <div class="form-group">
+                    <label for="room-select" class="form-label">Room</label>
+                    <select id="room-select" name="room_id" class="form-select" required>
+                        <option value="">Select a room</option>
+                    </select>
                 </div>
 
-                <div class="grid grid-cols-2 gap-x-4">
+                <div class="form-group">
+                    <label for="booking_date" class="form-label">Date</label>
+                    <input type="date" id="booking_date" name="booking_date" class="form-input" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
                     <fieldset>
-                        <legend class="block text-sm font-medium text-slate-700">Start Time</legend>
-                        <div class="mt-1 grid grid-cols-2 gap-x-2">
+                        <legend class="form-label">Start Time</legend>
+                        <div class="grid grid-cols-2 gap-2">
                             <div class="relative">
-                                <button type="button" id="start-hour-btn" class="bg-white text-left w-full border border-slate-300 rounded-md shadow-sm p-2 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="button" id="start-hour-btn" class="form-select text-left">
                                     <span id="start-hour-text">Hour</span>
-                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                                 <div id="start-hour-dropdown" class="hidden absolute z-20 w-full mt-1 bg-white rounded-md shadow-lg max-h-48 overflow-y-auto border border-slate-200"></div>
                             </div>
                             <div class="relative">
-                                <button type="button" id="start-minute-btn" class="bg-white text-left w-full border border-slate-300 rounded-md shadow-sm p-2 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="button" id="start-minute-btn" class="form-select text-left">
                                     <span id="start-minute-text">Min</span>
-                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                                 <div id="start-minute-dropdown" class="hidden absolute z-20 w-full mt-1 bg-white rounded-md shadow-lg max-h-48 overflow-y-auto border border-slate-200"></div>
                             </div>
                         </div>
                     </fieldset>
                     <fieldset>
-                        <legend class="block text-sm font-medium text-slate-700">End Time</legend>
-                        <div class="mt-1 grid grid-cols-2 gap-x-2">
+                        <legend class="form-label">End Time</legend>
+                        <div class="grid grid-cols-2 gap-2">
                              <div class="relative">
-                                <button type="button" id="end-hour-btn" class="bg-white text-left w-full border border-slate-300 rounded-md shadow-sm p-2 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="button" id="end-hour-btn" class="form-select text-left">
                                     <span id="end-hour-text">Hour</span>
-                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                                 <div id="end-hour-dropdown" class="hidden absolute z-20 w-full mt-1 bg-white rounded-md shadow-lg max-h-48 overflow-y-auto border border-slate-200"></div>
                             </div>
                             <div class="relative">
-                                <button type="button" id="end-minute-btn" class="bg-white text-left w-full border border-slate-300 rounded-md shadow-sm p-2 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="button" id="end-minute-btn" class="form-select text-left">
                                     <span id="end-minute-text">Min</span>
-                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    <svg class="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                                 <div id="end-minute-dropdown" class="hidden absolute z-20 w-full mt-1 bg-white rounded-md shadow-lg max-h-48 overflow-y-auto border border-slate-200"></div>
                             </div>
@@ -60,12 +77,26 @@
                     </fieldset>
                 </div>
 
-                <div class="flex justify-end pt-4 border-t border-slate-200 mt-2">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors duration-200">
-                        Confirm Booking
-                    </button>
+                <div class="form-group">
+                    <label class="form-label">Privacy</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="is_public" value="true" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                            <span class="ml-2 text-sm text-slate-700">Public - Visible to all company members</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="is_public" value="false" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                            <span class="ml-2 text-sm text-slate-700">Private - Only visible to you</span>
+                        </label>
+                    </div>
                 </div>
             </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="submit" form="booking-form" class="btn btn-primary">
+                Confirm Booking
+            </button>
         </div>
     </div>
 </div>

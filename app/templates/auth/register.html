@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Boardroom Booker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 min-h-screen">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
+    
+    <div class="relative min-h-screen flex items-start justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full" style="margin-top: 15vh;">
+            <!-- Logo/Brand Section -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gradient mb-2">Boardroom Booker</h1>
+                <p class="text-gray-600" id="registration-subtitle">Join your company's workspace</p>
+            </div>
+
+                         <!-- Registration Card -->
+             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                 <div class="mb-6">
+                     <h2 class="text-2xl font-bold text-gray-900 text-center">
+                         Create your account
+                     </h2>
+                     <p class="text-gray-600 text-center mt-2">
+                         Get started with your workspace
+                     </p>
+                 </div>
+                 
+                 <form class="space-y-6" id="register-form">
+                    <!-- Invitation Code Section -->
+                    <div id="invitation-section" class="space-y-4" style="display: none;">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-blue-800">You have an invitation</h3>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <p id="invitation-details">Loading invitation details...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Full Name Field -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <div class="relative">
+                                <input id="name" name="name" type="text" required 
+                                       class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                       placeholder="Enter your full name">
+                            </div>
+                        </div>
+                        
+                        <!-- Email Field -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <div class="relative">
+                                <input id="email" name="email" type="email" required 
+                                       class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                       placeholder="Enter your email address">
+                            </div>
+                        </div>
+                        
+                        <!-- Password Field -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <div class="relative">
+                                <input id="password" name="password" type="password" required 
+                                       class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                       placeholder="Create a secure password">
+                            </div>
+                        </div>
+                
+                        <!-- Company Creation Fields (hidden when using invitation) -->
+                        <div id="company-fields">
+                            <!-- Company Name Field -->
+                            <div>
+                                <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                                <div class="relative">
+                                    <input id="company_name" name="company_name" type="text" 
+                                           class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                           placeholder="Enter your company name">
+                                </div>
+                            </div>
+                            
+                            <!-- Company Domain Field -->
+                            <div>
+                                <label for="company_domain" class="block text-sm font-medium text-gray-700 mb-2">Company Domain</label>
+                                <div class="relative">
+                                    <input id="company_domain" name="company_domain" type="text" 
+                                           class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                           placeholder="company.com">
+                                </div>
+                                <p class="mt-2 text-xs text-gray-500">Your email domain must match this company domain</p>
+                            </div>
+                            
+                                                         <!-- No Company Option -->
+                             <div class="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                 <input id="no_company" name="no_company" type="checkbox" 
+                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                 <label for="no_company" class="ml-3 block text-sm text-gray-700">
+                                     No company available?
+                                 </label>
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" 
+                                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                                style="background: linear-gradient(to right, #3b82f6, #2563eb) !important; border-color: #3b82f6 !important;">
+                            Create your account
+                        </button>
+                    </div>
+
+                    <!-- Login Link -->
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600">
+                            Already have an account? 
+                            <a href="{{ url_for('auth.login') }}" class="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-200">
+                                Sign in here
+                            </a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+
+        </div>
+    </div>
+
+<script>
+let invitationCode = null;
+let invitationData = null;
+
+// Check for invitation code in URL
+function checkForInvitationCode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+        invitationCode = code;
+        validateInvitation(code);
+    }
+}
+
+// Validate invitation code
+async function validateInvitation(code) {
+    try {
+        const response = await fetch(`/api/invitations/${code}/validate`);
+        const data = await response.json();
+        
+        if (data.success) {
+            invitationData = data.invitation;
+            showInvitationSection(data.invitation);
+        } else {
+            showError('Invalid invitation code: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error validating invitation:', error);
+        showError('Failed to validate invitation code');
+    }
+}
+
+// Show invitation section
+function showInvitationSection(invitation) {
+    const invitationSection = document.getElementById('invitation-section');
+    const invitationDetails = document.getElementById('invitation-details');
+    const companyFields = document.getElementById('company-fields');
+    const subtitle = document.getElementById('registration-subtitle');
+    
+    // Update invitation details
+    invitationDetails.innerHTML = `
+        You've been invited to join <strong>${invitation.company_name}</strong> as a <strong>${invitation.role}</strong>.
+        <br><br>
+        <strong>Email:</strong> ${invitation.email}
+    `;
+    
+    // Show invitation section
+    invitationSection.style.display = 'block';
+    
+    // Hide company fields
+    companyFields.style.display = 'none';
+    
+    // Update subtitle
+    subtitle.textContent = `Join ${invitation.company_name}`;
+    
+    // Pre-fill email field
+    document.getElementById('email').value = invitation.email;
+    document.getElementById('email').readOnly = true;
+    
+    // Pre-fill name field
+    document.getElementById('name').value = invitation.name;
+    document.getElementById('name').readOnly = true;
+    
+    // Make company fields not required
+    document.getElementById('company_name').required = false;
+    document.getElementById('company_domain').required = false;
+}
+
+// Form submission
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+    };
+    
+    // Add invitation code if present
+    if (invitationCode) {
+        formData.invitation_code = invitationCode;
+    } else {
+        // Check if user selected "no company"
+        const noCompany = document.getElementById('no_company').checked;
+        
+        if (noCompany) {
+            // User doesn't want to associate with a company
+            formData.no_company = true;
+        } else {
+            // Add company fields for new company creation
+            formData.company_name = document.getElementById('company_name').value;
+            formData.company_domain = document.getElementById('company_domain').value;
+        }
+    }
+    
+    try {
+        const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.href = '/';
+        } else {
+            showError(data.error || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showError('An error occurred during registration');
+    }
+});
+
+// Toggle company fields visibility
+function toggleCompanyFields() {
+    const companyFields = document.getElementById('company-fields');
+    const noCompanyCheckbox = document.getElementById('no_company');
+    const companyNameField = document.getElementById('company_name').parentElement.parentElement;
+    const companyDomainField = document.getElementById('company_domain').parentElement.parentElement;
+    
+    if (noCompanyCheckbox.checked) {
+        // Hide company fields and make them not required
+        companyNameField.style.display = 'none';
+        companyDomainField.style.display = 'none';
+        document.getElementById('company_name').required = false;
+        document.getElementById('company_domain').required = false;
+        document.getElementById('company_name').value = '';
+        document.getElementById('company_domain').value = '';
+    } else {
+        // Show company fields and make them required
+        companyNameField.style.display = 'block';
+        companyDomainField.style.display = 'block';
+        document.getElementById('company_name').required = true;
+        document.getElementById('company_domain').required = true;
+    }
+}
+
+// Domain validation (only for new company creation)
+document.getElementById('company_domain').addEventListener('blur', async function() {
+    if (invitationCode) return; // Skip validation for invitations
+    
+    const domain = this.value.trim();
+    const email = document.getElementById('email').value.trim();
+    
+    if (domain && email) {
+        const emailDomain = email.split('@')[1];
+        if (emailDomain && emailDomain !== domain) {
+            this.setCustomValidity('Email domain must match company domain');
+            this.reportValidity();
+        } else {
+            this.setCustomValidity('');
+        }
+    }
+});
+
+document.getElementById('email').addEventListener('blur', async function() {
+    if (invitationCode) return; // Skip validation for invitations
+    
+    const email = this.value.trim();
+    const domain = document.getElementById('company_domain').value.trim();
+    
+    if (domain && email) {
+        const emailDomain = email.split('@')[1];
+        if (emailDomain && emailDomain !== domain) {
+            this.setCustomValidity('Email domain must match company domain');
+            this.reportValidity();
+        } else {
+            this.setCustomValidity('');
+        }
+    }
+});
+
+// Show error message
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    checkForInvitationCode();
+    
+    // Add event listener for the no company checkbox
+    document.getElementById('no_company').addEventListener('change', function() {
+        toggleCompanyFields();
+    });
+});
+</script>
+    </div>
+</body>
+</html> 

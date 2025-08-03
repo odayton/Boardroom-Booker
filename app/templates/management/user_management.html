@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gradient mb-2">User Management</h1>
+                    <p class="text-gray-600">Manage users in your company efficiently</p>
+                </div>
+                <div class="page-actions">
+                    <button id="invite-user-btn" class="btn btn-primary btn-lg hover-lift">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Invite User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card hover-lift">
+        <div class="card-header">
+            <h3 class="card-title">Company Users</h3>
+        </div>
+        <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Users will be loaded here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invitations Table -->
+    <div class="card hover-lift">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title">Active Invitations</h3>
+                <button id="refresh-invitations-btn" class="btn btn-secondary btn-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="table" id="invitations-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Invited By</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invitations-tbody">
+                        <!-- Invitations will be loaded here dynamically -->
+                    </tbody>
+                </table>
+                <div id="invitations-loading" class="text-center py-8" style="display: none;">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading invitations...</p>
+                </div>
+                <div id="invitations-empty" class="text-center py-8" style="display: none;">
+                    <div class="max-w-md mx-auto">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4">
+                            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No invitations yet</h3>
+                        <p class="text-gray-600 mb-4">Use the "Invite User" button above to create your first invitation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden card text-center">
+        <div class="card-body py-16">
+            <div class="max-w-md mx-auto">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-6 shadow-lg">
+                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">No users yet</h3>
+                <p class="text-gray-600 mb-8 text-lg">Use the "Invite User" button above to invite your first user.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="card text-center">
+        <div class="card-body py-16">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-6"></div>
+            <p class="text-gray-600 text-lg">Loading users...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Invite User Modal -->
+<div id="invite-modal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-content-lg">
+        <div class="p-6">
+            <!-- Header with icon -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center justify-center w-10 h-10 bg-primary-100 rounded-lg">
+                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112-2h4a6 6 0 0112 2v2H3v-2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900">Invite New User</h3>
+                        <p class="text-sm text-gray-600 mt-1">Send an invitation to join your company</p>
+                    </div>
+                </div>
+                <button id="close-invite-modal" class="btn-close">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="invite-form">
+                <div class="space-y-8">
+                    <!-- User Information Section -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            User Information
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label for="invite-name" class="form-label">
+                                    <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    Full Name
+                                </label>
+                                <input type="text" id="invite-name" name="name" required
+                                       class="form-input"
+                                       placeholder="Enter full name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="invite-email" class="form-label">
+                                    <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Email Address
+                                </label>
+                                <input type="email" id="invite-email" name="email" required
+                                       class="form-input"
+                                       placeholder="Enter email address">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Role Assignment Section -->
+                    <div class="bg-blue-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            Role Assignment
+                        </h4>
+                        
+                        <div class="form-group">
+                            <label for="invite-role" class="form-label">Select Role</label>
+                            <select id="invite-role" name="role" required class="form-input form-select">
+                                <option value="">Choose a role for this user</option>
+                                <option value="employee">Employee</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin" id="invite-admin-option" style="display: none;">Admin</option>
+                                <option value="guest">Guest</option>
+                            </select>
+                            <p class="text-sm text-gray-600 mt-2">The role determines the user's permissions and access level</p>
+                        </div>
+                        
+                        <!-- Guest Duration Field (only shown for guest role) -->
+                        <div class="form-group" id="guest-duration-group" style="display: none;">
+                            <label for="guest-duration" class="form-label">Guest Duration (days)</label>
+                            <input type="number" id="guest-duration" name="guest_duration_days" min="1" max="365"
+                                   class="form-input"
+                                   placeholder="30"
+                                   value="30">
+                            <p class="text-sm text-gray-600 mt-2">How long this guest account will be active (default: 30 days)</p>
+                        </div>
+                        
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <span class="text-sm font-medium text-gray-900">Employee</span>
+                                    <p class="text-xs text-gray-600">Can book rooms and view company calendar</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <span class="text-sm font-medium text-gray-900">Manager</span>
+                                    <p class="text-xs text-gray-600">Can manage employees and create invitations</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200" id="admin-role-info" style="display: none;">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <span class="text-sm font-medium text-gray-900">Admin</span>
+                                    <p class="text-xs text-gray-600">Full access to all features including room and user management</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200" id="guest-role-info" style="display: none;">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-3">
+                                    <span class="text-sm font-medium text-gray-900">Guest</span>
+                                    <p class="text-xs text-gray-600">Temporary access with limited permissions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 mt-10 pt-6 border-t border-gray-200">
+                    <button type="button" id="cancel-invite" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submit-invite" class="btn btn-primary btn-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        Send Invitation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="edit-user-modal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-content-md">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Edit User</h3>
+                <button id="close-edit-modal" class="btn-close">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="edit-user-form" class="space-y-6">
+                <input type="hidden" id="edit-user-id" name="user_id">
+                
+                <div class="form-group">
+                    <label for="edit-name" class="form-label">Full Name</label>
+                    <input type="text" id="edit-name" name="name" required class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-email" class="form-label">Email Address</label>
+                    <input type="email" id="edit-email" name="email" required class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-role" class="form-label">Role</label>
+                    <select id="edit-role" name="role" required class="form-input form-select">
+                        <option value="">Select a role</option>
+                        <option value="employee">Employee</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin" id="edit-admin-option" style="display: none;">Admin</option>
+                        <option value="guest">Guest</option>
+                    </select>
+                </div>
+                
+                <!-- Guest Expiration Field (only shown for guest role) -->
+                <div class="form-group" id="edit-guest-expiration-group" style="display: none;">
+                    <label for="edit-guest-expiration" class="form-label">Expiration Date</label>
+                    <input type="datetime-local" id="edit-guest-expiration" name="expires_at"
+                           class="form-input">
+                    <p class="text-sm text-gray-600 mt-2">When this guest account will expire</p>
+                </div>
+            </form>
+            
+            <div class="flex justify-end space-x-3 mt-8">
+                <button id="cancel-edit" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button id="submit-edit" class="btn btn-primary">
+                    Update User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invitation Details Modal -->
+<div id="invitation-details-modal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-content-lg">
+        <div class="p-6">
+            <!-- Header with icon -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900">Invitation Details</h3>
+                        <p class="text-sm text-gray-600 mt-1">Share this invitation with the user</p>
+                    </div>
+                </div>
+                <button id="close-invitation-details-modal" class="btn-close">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="invitation-details-content" class="space-y-6">
+                <!-- Invitation details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-confirmation-modal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="mt-3">
+            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mx-auto mb-4">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Delete User</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete this user? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-delete" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button id="confirm-delete" class="btn btn-danger">
+                    Delete User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invitation Confirmation Modal -->
+<div id="invitation-confirmation-modal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="mt-3">
+            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mx-auto mb-4">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 id="invitation-confirmation-title" class="text-lg font-bold text-gray-900 mb-2">Confirm Action</h3>
+            <p id="invitation-confirmation-message" class="text-gray-600 mb-6">Are you sure you want to perform this action?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-invitation-confirmation" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button id="confirm-invitation-action" class="btn btn-danger">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pages/user-management.js') }}"></script>
+{% endblock %} 

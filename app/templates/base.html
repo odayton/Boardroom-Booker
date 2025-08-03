@@ -7,64 +7,54 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
-
-    <style>
-        /* 1. Create a flex container that controls the overall component height */
-        .calendar-wrapper {
-            display: flex;
-            flex-direction: column;
-            height: 85vh; /* You can adjust this value (e.g., 80vh, 90vh) to make the whole component taller or shorter */
-        }
-
-        /* 2. Style the header box */
-        .calendar-wrapper .fc-header-toolbar {
-            flex-shrink: 0; /* Prevents the header from shrinking */
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* 3. Style the grid box and make it fill the remaining space */
-        .calendar-wrapper .fc-view-harness {
-            flex-grow: 1; /* Allows the grid to grow and fill available space */
-            min-height: 0; /* A flexbox trick to allow shrinking below content size */
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            padding: 1rem;
-        }
-
-        /* Make the inner grid transparent so the wrapper's style shows through */
-        .fc-theme-standard .fc-scrollgrid {
-            border: none !important; 
-        }
-        .fc .fc-view {
-             background-color: transparent !important;
-        }
-    </style>
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 </head>
-<body class="font-sans bg-slate-50 text-slate-800">
-
-    <nav class="bg-white border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <span class="font-bold text-xl text-indigo-600">Boardroom Booker</span>
-                </div>
-                <div class="flex items-center">
-                    {% block top_buttons %}{% endblock %}
+<body>
+    <!-- Sidebar -->
+    {% if current_user.is_authenticated %}
+    {% include 'partials/_sidebar.html' %}
+    {% endif %}
+    
+    <!-- Main content area -->
+    <div class="main-container">
+        <!-- Top navigation -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-content">
+                    <div class="navbar-left">
+                        {% if current_user.is_authenticated %}
+                        <button id="open-sidebar" class="navbar-toggle" title="Toggle Sidebar">
+                            <svg class="navbar-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                        {% endif %}
+                        <span class="navbar-brand">Boardroom Booker</span>
+                    </div>
+                    <div class="navbar-actions">
+                        {% block top_buttons %}{% endblock %}
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+        
+        <!-- Page content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
 
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-
+    <!-- Core JavaScript -->
+    <script src="{{ url_for('static', filename='js/utils/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/modal.js') }}"></script>
+    
+    <!-- Sidebar JavaScript -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/components/sidebar.js') }}"></script>
+    {% endif %}
+    
+    {% block scripts %}{% endblock %}
 </body>
-</html>
+</html> 

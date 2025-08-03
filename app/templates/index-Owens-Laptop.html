@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block top_buttons %}
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+            Sign In
+        </a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">
+            Sign Up
+        </a>
+    {% else %}
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-700">{{ current_user.name }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="text-gray-500 hover:text-gray-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="card">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Calendar</h1>
+                    <p class="text-gray-600 mt-1">Manage your room bookings and schedule</p>
+                </div>
+                {% if current_user.is_authenticated %}
+                <div class="flex items-center gap-3">
+                    <button id="new-booking-btn" class="btn btn-primary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        New Booking
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Container -->
+    {% if current_user.is_authenticated %}
+    <div class="card">
+        <div id="calendar" class="p-6"></div>
+    </div>
+    {% else %}
+    <!-- Welcome Screen for Non-Authenticated Users -->
+    <div class="card">
+        <div class="card-body text-center">
+            <div class="max-w-md mx-auto">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 mb-4">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to BoardRoom Booker</h3>
+                <p class="text-gray-600 mb-6">Sign in to access your calendar and manage room bookings.</p>
+                <div class="flex gap-3 justify-center">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                        Sign In
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">
+                        Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Include Modals -->
+{% include 'partials/_booking_modal.html' %}
+{% include 'partials/_booking_details_modal.html' %}
+{% include 'partials/_room_management_modal.html' %}
+{% include 'partials/_auth_modal.html' %}
+
+<!-- Calendar Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}

@@ -99,10 +99,11 @@ document.addEventListener('DOMContentLoaded', function () {
         slots.forEach(slot => {
             const option = document.createElement('a');
             option.href = '#';
-            option.className = 'block px-4 py-2 text-sm text-slate-700 hover:bg-indigo-100';
+            option.className = '';
             option.textContent = slot.label;
             option.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 els.text.textContent = slot.label;
                 stateObject[type] = slot.value;
                 els.dropdown.classList.add('hidden');
@@ -119,6 +120,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
             els.dropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!els.btn.contains(e.target) && !els.dropdown.contains(e.target)) {
+                els.dropdown.classList.add('hidden');
+            }
         });
     }
 
@@ -202,9 +210,50 @@ document.addEventListener('DOMContentLoaded', function () {
     if (authModalOverlay) authModalOverlay.addEventListener('click', () => hideModal(authModal));
 
     // --- Booking Modal Event Listeners ---
-    if (newBookingBtn) newBookingBtn.addEventListener('click', () => openNewBookingModal(null, null));
-    if (bookingModalCloseBtn) bookingModalCloseBtn.addEventListener('click', () => hideModal(bookingModal));
-    if (bookingModalOverlay) bookingModalOverlay.addEventListener('click', () => hideModal(bookingModal));
+    // Use a flag to prevent multiple event listener attachments
+    if (!window.bookingModalInitialized) {
+        window.bookingModalInitialized = true;
+        
+        if (newBookingBtn) {
+            newBookingBtn.addEventListener('click', () => openNewBookingModal(null, null));
+        }
+        
+        if (bookingModalCloseBtn) {
+            bookingModalCloseBtn.addEventListener('click', () => hideModal(bookingModal));
+        }
+        
+        // Add cancel button event listener
+        const cancelBookingBtn = document.getElementById('cancel-booking-btn');
+        if (cancelBookingBtn) {
+            cancelBookingBtn.addEventListener('click', () => hideModal(bookingModal));
+        }
+        
+        // Prevent modal from closing when clicking anywhere inside the modal content
+        if (bookingModal) {
+            const modalContent = bookingModal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Prevent closing when clicking on form inputs and other interactive elements
+            const formInputs = bookingModal.querySelectorAll('input, select, textarea, button:not(.btn-close):not(#cancel-booking-btn), .dropdown-btn, .dropdown-menu');
+            formInputs.forEach(input => {
+                input.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            });
+            
+            // Also prevent closing when clicking on the modal overlay (the background)
+            if (bookingModalOverlay) {
+                bookingModalOverlay.addEventListener('click', (e) => {
+                    // Don't close - remove this functionality
+                    e.stopPropagation();
+                });
+            }
+        }
+    }
 
 
 

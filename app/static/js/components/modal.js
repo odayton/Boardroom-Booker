@@ -88,9 +88,18 @@ window.modalManager = {
 
 // Initialize modals when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-register all modals
+    // Auto-register all modals except booking-modal (handled by calendar.js), user management modals, and room management modals
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
-        window.modalManager.register(modal.id);
+        if (modal.id !== 'booking-modal' && 
+            !modal.id.includes('invite-modal') && 
+            !modal.id.includes('edit-user-modal') && 
+            !modal.id.includes('delete-confirmation-modal') && 
+            !modal.id.includes('invitation-details-modal') && 
+            !modal.id.includes('invitation-confirmation-modal') &&
+            !modal.id.includes('room-modal') &&
+            !modal.id.includes('delete-modal')) {
+            window.modalManager.register(modal.id);
+        }
     });
 }); 

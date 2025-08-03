@@ -1,8 +1,8 @@
 # app/routes.py
 import os
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session
-from flask_login import login_required, current_user, login_user
-from .models import Booking, User, Company, Room
+from flask_login import login_required, current_user, login_user, logout_user
+from .models import Booking, User, Company, Room, Invitation
 from app import db
 from datetime import datetime
 import functools
@@ -35,14 +35,44 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def manager_required(f):
+    """Decorator to ensure user is a manager or admin"""
+    @functools.wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        if not current_user.can_manage_users():
+            return jsonify({'success': False, 'error': 'Manager or Admin access required'}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def room_management_required(f):
+    """Decorator to ensure user can manage rooms (admin only)"""
+    @functools.wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        if not current_user.can_manage_rooms():
+            return jsonify({'success': False, 'error': 'Admin access required for room management'}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
 @bp.route('/')
 def index():
+    # Redirect non-authenticated users to login page
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
     # Auto-login in dev mode
     if os.environ.get('DEV_MODE') == 'true' and not current_user.is_authenticated:
         dev_user = User.query.filter_by(email='dev@test.com').first()
         if dev_user:
             login_user(dev_user)
             print(f"🔐 Auto-logged in as: {dev_user.name}")
+    # Force logout in user mode if dev user is logged in
+    elif os.environ.get('DEV_MODE') == 'false' and current_user.is_authenticated and current_user.email == 'dev@test.com':
+        logout_user()
+        print("🔓 Logged out dev user in user mode")
     
     is_microsoft_logged_in = "microsoft_user_token" in session
     is_google_logged_in = "google_credentials" in session
@@ -55,17 +85,19 @@ def index():
 
 @bp.route('/room-management')
 @login_required
-@admin_required
+@room_management_required
 def room_management():
     """Room management page for admins"""
     return render_template('management/room_management.html', title='Room Management')
 
 @bp.route('/user-management')
 @login_required
-@admin_required
+@manager_required
 def user_management():
-    """User management page for admins"""
+    """User management page for managers and admins"""
     return render_template('management/user_management.html', title='User Management')
+
+
 
 @bp.route('/login/microsoft')
 def microsoft_login():
@@ -107,71 +139,54 @@ def get_rooms():
     rooms = Room.query.filter_by(company_id=current_user.company_id).all()
     return jsonify([{
         'id': room.id,
-        'name': room.name
+        'name': room.name,
+        'description': room.description,
+        'capacity': room.capacity,
+        'room_type': room.room_type,
+        'location': room.location,
+        'equipment': room.get_equipment_list(),
+        'status': room.status,
+        'access_level': room.access_level,
+        'operating_hours_start': room.operating_hours_start.strftime('%H:%M') if room.operating_hours_start else None,
+        'operating_hours_end': room.operating_hours_end.strftime('%H:%M') if room.operating_hours_end else None,
+        'created_at': room.created_at.isoformat() if room.created_at else None,
+        'updated_at': room.updated_at.isoformat() if room.updated_at else room.created_at.isoformat() if room.created_at else None
     } for room in rooms])
 
 # User Management Endpoints
 @bp.route('/api/users', methods=['GET'])
 @company_required
-@admin_required
+@manager_required
 def get_users():
-    """Get all users for the current user's company"""
-    users = User.query.filter_by(company_id=current_user.company_id).all()
+    """Get all users for the current user's company (filtered by role hierarchy)"""
+    # Get all users in the company
+    all_users = User.query.filter_by(company_id=current_user.company_id).all()
+    
+    # Filter users based on role hierarchy
+    visible_users = [user for user in all_users if current_user.can_see_user(user)]
+    
     return jsonify([{
         'id': user.id,
         'name': user.name,
         'email': user.email,
         'role': user.role,
+        'role_display': user.get_role_display(),
+        'expires_at': user.expires_at.isoformat() if user.expires_at else None,
+        'is_active': user.is_active_user(),
         'created_at': user.created_at.isoformat() if user.created_at else None
-    } for user in users])
+    } for user in visible_users])
 
 @bp.route('/api/users/invite', methods=['POST'])
 @company_required
-@admin_required
+@manager_required
 def invite_user():
-    """Invite a new user to the company"""
-    data = request.get_json()
-    name = data.get('name', '').strip()
-    email = data.get('email', '').lower().strip()
-    role = data.get('role', 'user')
-    
-    if not all([name, email, role]):
-        return jsonify({'success': False, 'error': 'All fields are required'}), 400
-    
-    if role not in ['user', 'admin']:
-        return jsonify({'success': False, 'error': 'Invalid role'}), 400
-    
-    # Check if user already exists
-    if User.query.filter_by(email=email).first():
-        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
-    
-    # Create user
-    user = User(
-        email=email,
-        name=name,
-        role=role,
-        company_id=current_user.company_id
-    )
-    # Set a temporary password (user will need to reset it)
-    user.set_password('temp_password_123')
-    
-    db.session.add(user)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'message': 'User invited successfully',
-        'user': {
-            'id': user.id,
-            'name': user.name,
-            'email': user.email,
-            'role': user.role
-        }
-    }), 201
+    """Invite a new user to the company (legacy route - now redirects to invitation system)"""
+    # This route is kept for backward compatibility but now uses the invitation system
+    return create_invitation()
 
 @bp.route('/api/users/<int:user_id>', methods=['PUT'])
 @company_required
-@admin_required
+@manager_required
 def update_user(user_id):
     """Update a user"""
     user = User.query.filter_by(
@@ -179,16 +194,25 @@ def update_user(user_id):
         company_id=current_user.company_id
     ).first_or_404()
     
+    # Check if user can be updated based on role hierarchy
+    if not current_user.can_edit_user(user):
+        return jsonify({'success': False, 'error': 'Cannot update this user'}), 403
+    
     data = request.get_json()
     name = data.get('name', '').strip()
     email = data.get('email', '').lower().strip()
-    role = data.get('role', 'user')
+    role = data.get('role', 'employee')
+    expires_at = data.get('expires_at')  # For guest accounts
     
     if not all([name, email, role]):
         return jsonify({'success': False, 'error': 'All fields are required'}), 400
     
-    if role not in ['user', 'admin']:
+    if role not in ['admin', 'manager', 'employee', 'guest']:
         return jsonify({'success': False, 'error': 'Invalid role'}), 400
+    
+    # Check role hierarchy - managers can only update employees and guests
+    if current_user.is_manager() and role not in ['employee', 'guest']:
+        return jsonify({'success': False, 'error': 'Managers can only update employees and guests'}), 403
     
     # Check if email is already taken by another user
     existing_user = User.query.filter_by(email=email).first()
@@ -199,6 +223,15 @@ def update_user(user_id):
     user.email = email
     user.role = role
     
+    # Handle expiration for guest accounts
+    if role == 'guest' and expires_at:
+        try:
+            user.expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+        except:
+            return jsonify({'success': False, 'error': 'Invalid expiration date format'}), 400
+    elif role != 'guest':
+        user.expires_at = None
+    
     db.session.commit()
     
     return jsonify({
@@ -208,13 +241,16 @@ def update_user(user_id):
             'id': user.id,
             'name': user.name,
             'email': user.email,
-            'role': user.role
+            'role': user.role,
+            'role_display': user.get_role_display(),
+            'expires_at': user.expires_at.isoformat() if user.expires_at else None,
+            'is_active': user.is_active_user()
         }
     })
 
 @bp.route('/api/users/<int:user_id>', methods=['DELETE'])
 @company_required
-@admin_required
+@manager_required
 def delete_user(user_id):
     """Delete a user"""
     if user_id == current_user.id:
@@ -225,6 +261,14 @@ def delete_user(user_id):
         company_id=current_user.company_id
     ).first_or_404()
     
+    # Check if user can be deleted based on role hierarchy
+    if not current_user.can_edit_user(user):
+        return jsonify({'success': False, 'error': 'Cannot delete this user'}), 403
+    
+    # Check if user has any bookings
+    if user.bookings:
+        return jsonify({'success': False, 'error': 'Cannot delete user with existing bookings'}), 400
+    
     db.session.delete(user)
     db.session.commit()
     
@@ -233,8 +277,197 @@ def delete_user(user_id):
         'message': 'User deleted successfully'
     })
 
+# Invitation Management Routes
+@bp.route('/api/invitations', methods=['GET'])
+@company_required
+@manager_required
+def get_invitations():
+    """Get all invitations for the company"""
+    invitations = Invitation.query.filter_by(company_id=current_user.company_id).all()
+    
+    return jsonify({
+        'success': True,
+        'invitations': [{
+            'id': inv.id,
+            'code': inv.code,
+            'email': inv.email,
+            'name': inv.name,
+            'role': inv.role,
+            'role_display': inv.get_role_display(),
+            'invited_by': inv.invited_by.name,
+            'expires_at': inv.expires_at.isoformat(),
+            'guest_duration_days': inv.guest_duration_days,
+            'is_used': inv.is_used,
+            'is_expired': inv.is_expired(),
+            'created_at': inv.created_at.isoformat()
+        } for inv in invitations]
+    })
+
+@bp.route('/api/invitations', methods=['POST'])
+@company_required
+@manager_required
+def create_invitation():
+    """Create a new invitation"""
+    if not current_user.can_invite_users():
+        return jsonify({'success': False, 'error': 'Cannot invite users'}), 403
+    
+    data = request.get_json()
+    email = data.get('email', '').lower().strip()
+    name = data.get('name', '').strip()
+    role = data.get('role', 'employee')
+    guest_duration_days = data.get('guest_duration_days')  # For guest accounts
+    
+    if not all([email, name, role]):
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
+    
+    if role not in ['admin', 'manager', 'employee', 'guest']:
+        return jsonify({'success': False, 'error': 'Invalid role'}), 400
+    
+    # Check role hierarchy - managers can only invite employees and guests
+    if current_user.is_manager() and role not in ['employee', 'guest']:
+        return jsonify({'success': False, 'error': 'Managers can only invite employees and guests'}), 403
+    
+    # Check if user already exists
+    if User.query.filter_by(email=email).first():
+        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+    
+    # Check if invitation already exists
+    existing_invitation = Invitation.query.filter_by(
+        email=email,
+        company_id=current_user.company_id,
+        is_used=False
+    ).first()
+    
+    if existing_invitation and not existing_invitation.is_expired():
+        return jsonify({'success': False, 'error': 'Invitation already exists for this email'}), 400
+    
+    # Create invitation
+    invitation = Invitation(
+        email=email,
+        name=name,
+        role=role,
+        company_id=current_user.company_id,
+        invited_by_id=current_user.id,
+        guest_duration_days=guest_duration_days if role == 'guest' else None
+    )
+    
+    db.session.add(invitation)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Invitation created successfully',
+        'invitation': {
+            'id': invitation.id,
+            'code': invitation.code,
+            'email': invitation.email,
+            'name': invitation.name,
+            'role': invitation.role,
+            'expires_at': invitation.expires_at.isoformat()
+        }
+    }), 201
+
+@bp.route('/api/invitations/<int:invitation_id>', methods=['DELETE'])
+@company_required
+@manager_required
+def delete_invitation(invitation_id):
+    """Delete an invitation"""
+    invitation = Invitation.query.filter_by(
+        id=invitation_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+    
+    if invitation.is_used:
+        return jsonify({'success': False, 'error': 'Cannot delete used invitation'}), 400
+    
+    db.session.delete(invitation)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Invitation deleted successfully'
+    })
+
+@bp.route('/api/invitations/<invitation_code>/accept', methods=['POST'])
+def accept_invitation(invitation_code):
+    """Accept an invitation and create user account"""
+    data = request.get_json()
+    password = data.get('password', '')
+    
+    if not password:
+        return jsonify({'success': False, 'error': 'Password is required'}), 400
+    
+    invitation = Invitation.query.filter_by(code=invitation_code).first()
+    
+    if not invitation:
+        return jsonify({'success': False, 'error': 'Invalid invitation code'}), 404
+    
+    if invitation.is_used:
+        return jsonify({'success': False, 'error': 'Invitation has already been used'}), 400
+    
+    if invitation.is_expired():
+        return jsonify({'success': False, 'error': 'Invitation has expired'}), 400
+    
+    # Check if user already exists
+    if User.query.filter_by(email=invitation.email).first():
+        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+    
+    # Create user
+    user = User(
+        email=invitation.email,
+        name=invitation.name,
+        role=invitation.role,
+        company_id=invitation.company_id
+    )
+    user.set_password(password)
+    
+    # Mark invitation as used
+    invitation.is_used = True
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    # Auto-login the user
+    login_user(user)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Account created successfully',
+        'user': {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'role': user.role
+        }
+    }), 201
+
+@bp.route('/api/invitations/<invitation_code>/validate', methods=['GET'])
+def validate_invitation(invitation_code):
+    """Validate an invitation code"""
+    invitation = Invitation.query.filter_by(code=invitation_code).first()
+    
+    if not invitation:
+        return jsonify({'success': False, 'error': 'Invalid invitation code'}), 404
+    
+    if invitation.is_used:
+        return jsonify({'success': False, 'error': 'Invitation has already been used'}), 400
+    
+    if invitation.is_expired():
+        return jsonify({'success': False, 'error': 'Invitation has expired'}), 400
+    
+    return jsonify({
+        'success': True,
+        'invitation': {
+            'email': invitation.email,
+            'name': invitation.name,
+            'role': invitation.role,
+            'company_name': invitation.company.name,
+            'expires_at': invitation.expires_at.isoformat()
+        }
+    })
+
 @bp.route('/api/rooms', methods=['POST'])
-@admin_required
+@room_management_required
 def create_room():
     """Create a new room (admin only)"""
     data = request.get_json()
@@ -252,7 +485,24 @@ def create_room():
     if existing_room:
         return jsonify({'success': False, 'error': 'Room with this name already exists'}), 400
     
-    room = Room(name=name, company_id=current_user.company_id)
+    # Create room with all fields
+    room = Room(
+        name=name,
+        description=data.get('description'),
+        capacity=data.get('capacity'),
+        room_type=data.get('room_type'),
+        location=data.get('location'),
+        status=data.get('status', 'available'),
+        access_level=data.get('access_level', 'all'),
+        operating_hours_start=datetime.strptime(data['operating_hours_start'], '%H:%M').time() if data.get('operating_hours_start') else None,
+        operating_hours_end=datetime.strptime(data['operating_hours_end'], '%H:%M').time() if data.get('operating_hours_end') else None,
+        company_id=current_user.company_id
+    )
+    
+    # Set equipment
+    if data.get('equipment'):
+        room.set_equipment_list(data['equipment'])
+    
     db.session.add(room)
     db.session.commit()
     
@@ -260,12 +510,21 @@ def create_room():
         'success': True,
         'room': {
             'id': room.id,
-            'name': room.name
+            'name': room.name,
+            'description': room.description,
+            'capacity': room.capacity,
+            'room_type': room.room_type,
+            'location': room.location,
+            'equipment': room.get_equipment_list(),
+            'status': room.status,
+            'access_level': room.access_level,
+            'operating_hours_start': room.operating_hours_start.strftime('%H:%M') if room.operating_hours_start else None,
+            'operating_hours_end': room.operating_hours_end.strftime('%H:%M') if room.operating_hours_end else None
         }
     }), 201
 
 @bp.route('/api/rooms/<int:room_id>', methods=['PUT'])
-@admin_required
+@room_management_required
 def update_room(room_id):
     """Update a room (admin only)"""
     room = Room.query.filter_by(
@@ -288,13 +547,36 @@ def update_room(room_id):
     if existing_room:
         return jsonify({'success': False, 'error': 'Room with this name already exists'}), 400
     
+    # Update all fields
     room.name = name
+    room.description = data.get('description')
+    room.capacity = data.get('capacity')
+    room.room_type = data.get('room_type')
+    room.location = data.get('location')
+    room.status = data.get('status', 'available')
+    room.access_level = data.get('access_level', 'all')
+    
+    # Handle time fields
+    if data.get('operating_hours_start'):
+        room.operating_hours_start = datetime.strptime(data['operating_hours_start'], '%H:%M').time()
+    else:
+        room.operating_hours_start = None
+        
+    if data.get('operating_hours_end'):
+        room.operating_hours_end = datetime.strptime(data['operating_hours_end'], '%H:%M').time()
+    else:
+        room.operating_hours_end = None
+    
+    # Set equipment
+    if data.get('equipment') is not None:
+        room.set_equipment_list(data['equipment'])
+    
     db.session.commit()
     
     return jsonify({'success': True})
 
 @bp.route('/api/rooms/<int:room_id>', methods=['DELETE'])
-@admin_required
+@room_management_required
 def delete_room(room_id):
     """Delete a room (admin only)"""
     room = Room.query.filter_by(

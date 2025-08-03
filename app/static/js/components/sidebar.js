@@ -8,49 +8,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     const toggleSidebarBtn = document.getElementById('open-sidebar');
 
-    // Initialize sidebar state based on screen size
+    // Initialize sidebar state - hidden by default on all screen sizes
     function initializeSidebar() {
-        if (window.innerWidth >= 1024) { // lg breakpoint
-            // Desktop: show sidebar by default
-            sidebar.classList.remove('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-        } else {
-            // Mobile: hide sidebar by default
-            sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-        }
+        // Always hide sidebar by default
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('visible');
     }
 
     function toggleSidebar() {
-        const isOpen = !sidebar.classList.contains('-translate-x-full');
+        const isOpen = sidebar.classList.contains('open');
         
         if (isOpen) {
             // Close sidebar
             sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('visible');
             document.body.style.overflow = '';
         } else {
             // Open sidebar
             sidebar.classList.remove('-translate-x-full');
-            sidebarOverlay.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('visible');
+            // Don't set overflow hidden as it can interfere with modals
+            // document.body.style.overflow = 'hidden';
         }
     }
 
     // Initialize on load
     initializeSidebar();
 
-    // Handle window resize
+    // Handle window resize - keep sidebar hidden by default
     window.addEventListener('resize', function() {
-        if (window.innerWidth >= 1024) {
-            // Desktop: show sidebar and hide overlay
-            sidebar.classList.remove('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-            document.body.style.overflow = '';
-        } else {
-            // Mobile: hide sidebar
+        // Always keep sidebar hidden by default on all screen sizes
+        if (!sidebar.classList.contains('open')) {
             sidebar.classList.add('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('visible');
             document.body.style.overflow = '';
         }
     });
@@ -65,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Close sidebar on escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
             toggleSidebar();
         }
     });

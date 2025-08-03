@@ -21,7 +21,7 @@ def create_dev_user():
             dev_user = User(
                 email='dev@test.com',
                 name='Development User',
-                role='admin',
+                role='owner',
                 company_id=company.id
             )
             dev_user.set_password('dev123')
@@ -89,6 +89,7 @@ def run_user_mode():
     """Run the application in user mode"""
     print("\n👤 Starting in USER mode...")
     print("🔐 Normal authentication required")
+    print("⚠️  Note: Any existing dev user sessions will be cleared")
     
     # Set environment variables
     os.environ['FLASK_ENV'] = 'production'

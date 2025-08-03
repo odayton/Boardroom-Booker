@@ -10,12 +10,14 @@
                     <h1 class="text-3xl font-bold text-gradient mb-2">Room Management</h1>
                     <p class="text-gray-600">Manage meeting rooms for your company efficiently</p>
                 </div>
-                <button id="add-room-btn" class="btn btn-primary btn-lg hover-lift">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Add Room
-                </button>
+                <div class="page-actions">
+                    <button id="add-room-btn" class="btn btn-primary btn-lg hover-lift">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Room
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -36,7 +38,7 @@
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-3">No rooms yet</h3>
                 <p class="text-gray-600 mb-8 text-lg">Get started by adding your first meeting room.</p>
-                <button id="add-first-room-btn" class="btn btn-primary btn-lg">
+                <button id="add-first-room-btn" class="btn btn-primary btn-lg hover-lift">
                     Add Your First Room
                 </button>
             </div>
@@ -53,9 +55,9 @@
 </div>
 
 <!-- Add/Edit Room Modal -->
-<div id="room-modal" class="modal hidden">
+<div id="room-modal" class="modal">
     <div class="modal-overlay"></div>
-    <div class="modal-content modal-content-md">
+    <div class="modal-content modal-content-lg">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-xl font-bold text-gray-900" id="room-modal-title">Add New Room</h3>
@@ -69,11 +71,128 @@
             <form id="room-form" class="space-y-6">
                 <input type="hidden" id="room-id" name="room_id">
                 
-                <div class="form-group">
-                    <label for="room-name" class="form-label">Room Name</label>
-                    <input type="text" id="room-name" name="name" required
-                           class="form-input"
-                           placeholder="e.g., Conference Room A">
+                <!-- Basic Information -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label for="room-name" class="form-label">Room Name *</label>
+                            <input type="text" id="room-name" name="name" required
+                                   class="form-input"
+                                   placeholder="e.g., Conference Room A">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="room-type" class="form-label">Room Type</label>
+                            <select id="room-type" name="room_type" class="form-input form-select">
+                                <option value="">Select room type</option>
+                                <option value="conference">Conference Room</option>
+                                <option value="meeting">Meeting Room</option>
+                                <option value="huddle">Huddle Space</option>
+                                <option value="training">Training Room</option>
+                                <option value="boardroom">Boardroom</option>
+                                <option value="breakout">Breakout Room</option>
+                                <option value="office">Private Office</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="room-capacity" class="form-label">Capacity</label>
+                            <input type="number" id="room-capacity" name="capacity" min="1"
+                                   class="form-input"
+                                   placeholder="e.g., 10">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="room-location" class="form-label">Location</label>
+                            <input type="text" id="room-location" name="location"
+                                   class="form-input"
+                                   placeholder="e.g., 2nd Floor, Building A">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mt-6">
+                        <label for="room-description" class="form-label">Description</label>
+                        <textarea id="room-description" name="description" rows="3"
+                                  class="form-input"
+                                  placeholder="Additional details about the room..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Equipment & Features -->
+                <div class="bg-blue-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Equipment & Features</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-projector" name="equipment" value="projector" class="mr-3">
+                            <label for="equipment-projector">Projector</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-whiteboard" name="equipment" value="whiteboard" class="mr-3">
+                            <label for="equipment-whiteboard">Whiteboard</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-video" name="equipment" value="video_conferencing" class="mr-3">
+                            <label for="equipment-video">Video Conferencing</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-audio" name="equipment" value="audio_system" class="mr-3">
+                            <label for="equipment-audio">Audio System</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-computer" name="equipment" value="computer" class="mr-3">
+                            <label for="equipment-computer">Computer/PC</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-tv" name="equipment" value="tv" class="mr-3">
+                            <label for="equipment-tv">TV/Display</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-phone" name="equipment" value="phone" class="mr-3">
+                            <label for="equipment-phone">Phone</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="equipment-wifi" name="equipment" value="wifi" class="mr-3">
+                            <label for="equipment-wifi">WiFi</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings -->
+                <div class="bg-green-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Settings</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label for="room-status" class="form-label">Status</label>
+                            <select id="room-status" name="status" class="form-input form-select">
+                                <option value="available">Available</option>
+                                <option value="maintenance">Under Maintenance</option>
+                                <option value="out_of_service">Out of Service</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="room-access" class="form-label">Access Level</label>
+                            <select id="room-access" name="access_level" class="form-input form-select">
+                                <option value="all">All Employees</option>
+                                <option value="managers_only">Managers Only</option>
+                                <option value="owners_only">Owners Only</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="room-hours-start" class="form-label">Operating Hours Start</label>
+                            <input type="time" id="room-hours-start" name="operating_hours_start"
+                                   class="form-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="room-hours-end" class="form-label">Operating Hours End</label>
+                            <input type="time" id="room-hours-end" name="operating_hours_end"
+                                   class="form-input">
+                        </div>
+                    </div>
                 </div>
             </form>
             
@@ -90,7 +209,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="modal hidden">
+<div id="delete-modal" class="modal">
     <div class="modal-overlay"></div>
     <div class="modal-content">
         <div class="mt-3">

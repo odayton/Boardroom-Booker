@@ -7,7 +7,4 @@
 @import 'layout.css';
 
 /* Component-specific styles */
-@import 'components.css';
-
-/* Additional styles */
-@import 'style.css'; 
+@import 'components.css'; 

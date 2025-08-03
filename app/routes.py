@@ -1,5 +1,6 @@
 # app/routes.py
 import os
+import json
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session
 from flask_login import login_required, current_user, login_user, logout_user
 from .models import Booking, User, Company, Room, Invitation
@@ -315,21 +316,38 @@ def create_invitation():
     email = data.get('email', '').lower().strip()
     name = data.get('name', '').strip()
     role = data.get('role', 'employee')
+    invitation_type = data.get('invitation_type', 'internal')  # 'internal' or 'external'
     guest_duration_days = data.get('guest_duration_days')  # For guest accounts
     
-    if not all([email, name, role]):
-        return jsonify({'success': False, 'error': 'All fields are required'}), 400
+    if not all([email, name, role, invitation_type]):
+        return jsonify({'success': False, 'error': 'Email, name, role, and invitation type are required'}), 400
+    
+    if not all([role, invitation_type]):
+        return jsonify({'success': False, 'error': 'Role and invitation type are required'}), 400
     
     if role not in ['admin', 'manager', 'employee', 'guest']:
         return jsonify({'success': False, 'error': 'Invalid role'}), 400
+    
+    if invitation_type not in ['internal', 'external']:
+        return jsonify({'success': False, 'error': 'Invalid invitation type'}), 400
     
     # Check role hierarchy - managers can only invite employees and guests
     if current_user.is_manager() and role not in ['employee', 'guest']:
         return jsonify({'success': False, 'error': 'Managers can only invite employees and guests'}), 403
     
+    # For external invitations, only allow manager role for security
+    if invitation_type == 'external' and role not in ['manager', 'employee', 'guest']:
+        return jsonify({'success': False, 'error': 'External users can only be assigned manager, employee, or guest roles'}), 400
+    
     # Check if user already exists
-    if User.query.filter_by(email=email).first():
-        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        # If user exists and this is an external invitation, check if they already have access
+        if invitation_type == 'external':
+            if existing_user.external_company_access == current_user.company_id:
+                return jsonify({'success': False, 'error': 'User already has access to this company'}), 400
+        else:
+            return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
     
     # Check if invitation already exists
     existing_invitation = Invitation.query.filter_by(
@@ -351,18 +369,22 @@ def create_invitation():
         guest_duration_days=guest_duration_days if role == 'guest' else None
     )
     
+    # Add metadata for invitations
+    invitation.invitation_metadata = json.dumps({'invitation_type': invitation_type})
+    
     db.session.add(invitation)
     db.session.commit()
     
     return jsonify({
         'success': True,
-        'message': 'Invitation created successfully',
+        'message': f'{invitation_type.title()} invitation created successfully',
         'invitation': {
             'id': invitation.id,
             'code': invitation.code,
             'email': invitation.email,
             'name': invitation.name,
             'role': invitation.role,
+            'invitation_type': invitation_type,
             'expires_at': invitation.expires_at.isoformat()
         }
     }), 201
@@ -408,23 +430,52 @@ def accept_invitation(invitation_code):
     if invitation.is_expired():
         return jsonify({'success': False, 'error': 'Invitation has expired'}), 400
     
-    # Check if user already exists
-    if User.query.filter_by(email=invitation.email).first():
-        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+    # Check if this is an external invitation
+    is_external = False
+    if invitation.invitation_metadata:
+        try:
+            metadata = json.loads(invitation.invitation_metadata)
+            is_external = metadata.get('invitation_type') == 'external'
+        except:
+            pass
     
-    # Create user
-    user = User(
-        email=invitation.email,
-        name=invitation.name,
-        role=invitation.role,
-        company_id=invitation.company_id
-    )
-    user.set_password(password)
+    # Check if user already exists
+    existing_user = User.query.filter_by(email=invitation.email).first()
+    
+    if existing_user:
+        if is_external:
+            # For external invitations, update the existing user's external access
+            existing_user.external_company_access = invitation.company_id
+            existing_user.role = invitation.role
+            user = existing_user
+        else:
+            return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+    else:
+        # Create new user
+        if is_external:
+            # For external invitations, set external_company_access instead of company_id
+            user = User(
+                email=invitation.email,
+                name=invitation.name,
+                role=invitation.role,
+                company_id=None,  # No primary company
+                external_company_access=invitation.company_id
+            )
+        else:
+            # For internal invitations, set company_id normally
+            user = User(
+                email=invitation.email,
+                name=invitation.name,
+                role=invitation.role,
+                company_id=invitation.company_id
+            )
+        
+        user.set_password(password)
+        db.session.add(user)
     
     # Mark invitation as used
     invitation.is_used = True
     
-    db.session.add(user)
     db.session.commit()
     
     # Auto-login the user
@@ -798,3 +849,23 @@ def delete_booking(booking_id):
     db.session.delete(booking)
     db.session.commit()
     return jsonify({'success': True})
+
+@bp.route('/api/current-user', methods=['GET'])
+@company_required
+def get_current_user():
+    """Get current user information including role"""
+    return jsonify({
+        'success': True,
+        'user': {
+            'id': current_user.id,
+            'name': current_user.name,
+            'email': current_user.email,
+            'role': current_user.role,
+            'role_display': current_user.get_role_display(),
+            'is_admin': current_user.is_admin(),
+            'is_manager': current_user.is_manager(),
+            'can_invite_users': current_user.can_invite_users(),
+            'can_manage_users': current_user.can_manage_users(),
+            'can_manage_rooms': current_user.can_manage_rooms()
+        }
+    })

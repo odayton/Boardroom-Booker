@@ -15,12 +15,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let invitations = [];
     let userToDelete = null;
     let invitationToDelete = null;
+    let currentUser = null; // Store current user information
 
     // Initialize
     loadUsers();
     loadInvitations();
+    loadCurrentUser(); // Load current user information
     bindEvents();
-    setupRoleVisibility();
 
     function bindEvents() {
         // Invite user modal events
@@ -62,6 +63,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Role selection change
         document.getElementById('invite-role')?.addEventListener('change', handleRoleChange);
+        
+        // Invitation type change
+        document.querySelectorAll('input[name="invitation_type"]').forEach(radio => {
+            radio.addEventListener('change', handleInvitationTypeChange);
+        });
+        
+
     }
 
     async function loadUsers() {
@@ -130,6 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modal) {
             modal.style.display = 'flex';
             console.log('Set display to flex');
+            // Set up role visibility when modal is shown
+            setupRoleVisibility();
         } else {
             console.error('Modal element not found');
         }
@@ -140,6 +150,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modal) {
             modal.style.display = 'none';
         }
+        
+        // Reset form fields
+        const form = document.getElementById('invite-form');
+        if (form) {
+            form.reset();
+        }
+        
+
+        
+        // Reset invitation type to internal
+        const internalInvite = document.getElementById('internal-invite');
+        if (internalInvite) {
+            internalInvite.checked = true;
+            handleInvitationTypeChange();
+        }
     }
 
     async function sendInvitation(event) {
@@ -148,14 +173,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('invite-form');
         const formData = new FormData(form);
         
+        const invitationType = formData.get('invitation_type');
+        
         const data = {
             name: formData.get('name'),
             email: formData.get('email'),
-            role: formData.get('role')
+            role: formData.get('role'),
+            invitation_type: invitationType
         };
         
-        if (!ApiUtils.validateRequiredFields(data, ['name', 'email', 'role'])) {
+        if (!ApiUtils.validateRequiredFields(data, ['name', 'email', 'role', 'invitation_type'])) {
             return;
+        }
+        
+        // Add guest duration if it's a guest role
+        if (data.role === 'guest') {
+            const guestDuration = formData.get('guest_duration_days');
+            if (guestDuration) {
+                data.guest_duration_days = parseInt(guestDuration);
+            }
         }
         
         try {
@@ -172,8 +208,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 hideInviteModal();
                 form.reset();
+                // Reset invitation type to internal
+                document.getElementById('internal-invite').checked = true;
+                handleInvitationTypeChange();
                 loadInvitations();
-                ApiUtils.showSuccess('Invitation created successfully!');
+                
+                const successMessage = invitationType === 'external' 
+                    ? 'External company invitation created successfully!' 
+                    : 'Invitation created successfully!';
+                ApiUtils.showSuccess(successMessage);
             } else {
                 ApiUtils.showError('Failed to create invitation: ' + result.error);
             }
@@ -503,22 +546,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function loadCurrentUser() {
+        try {
+            const response = await fetch('/api/current-user');
+            const data = await response.json();
+            if (data.success) {
+                currentUser = data.user;
+                setupRoleVisibility();
+            } else {
+                ApiUtils.showError('Failed to load current user: ' + data.error);
+            }
+        } catch (error) {
+            ApiUtils.showError('Failed to load current user: ' + error.message);
+        }
+    }
+
     function setupRoleVisibility() {
-        // Show/hide owner option based on current user role
-        // This will be implemented when we have user role information
+        if (!currentUser) {
+            console.warn('Current user not loaded, cannot set role visibility.');
+            return;
+        }
+
+        const inviteAdminOption = document.getElementById('invite-admin-option');
+        const adminRoleInfo = document.getElementById('admin-role-info');
+
+        // Show/hide admin option based on current user's role
+        if (currentUser.is_admin) {
+            // Admin users can see and assign admin role
+            inviteAdminOption.style.display = 'block';
+        } else {
+            // Manager users cannot see admin role option
+            inviteAdminOption.style.display = 'none';
+            // If admin was selected, reset to empty
+            const inviteRoleSelect = document.getElementById('invite-role');
+            if (inviteRoleSelect.value === 'admin') {
+                inviteRoleSelect.value = '';
+            }
+        }
     }
 
     function handleRoleChange() {
-        const roleSelect = document.getElementById('invite-role');
-        const ownerOption = document.getElementById('invite-owner-option');
-        const ownerInfo = document.getElementById('owner-role-info');
+        const role = document.getElementById('invite-role').value;
+        const guestDurationGroup = document.getElementById('guest-duration-group');
+        const guestRoleInfo = document.getElementById('guest-role-info');
+        const adminRoleInfo = document.getElementById('admin-role-info');
+        const adminOption = document.getElementById('invite-admin-option');
         
-        if (roleSelect.value === 'owner') {
-            ownerInfo.style.display = 'flex';
+        // Show/hide guest duration field
+        guestDurationGroup.style.display = role === 'guest' ? 'block' : 'none';
+        guestRoleInfo.style.display = role === 'guest' ? 'block' : 'none';
+        
+        // Show/hide admin role info
+        adminRoleInfo.style.display = role === 'admin' ? 'block' : 'none';
+        adminOption.style.display = role === 'admin' ? 'block' : 'none';
+    }
+    
+    function handleInvitationTypeChange() {
+        const invitationType = document.querySelector('input[name="invitation_type"]:checked').value;
+        const externalCompanyInfo = document.getElementById('external-company-info');
+        const managerDescription = document.getElementById('manager-description');
+        
+        if (invitationType === 'external') {
+            externalCompanyInfo.style.display = 'block';
+            managerDescription.textContent = 'Can invite their own employees to access your calendar';
         } else {
-            ownerInfo.style.display = 'none';
+            externalCompanyInfo.style.display = 'none';
+            managerDescription.textContent = 'Can manage employees and create invitations';
         }
     }
+    
+
 
     // Global functions for onclick handlers
     window.editUser = function(userId) {

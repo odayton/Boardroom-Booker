@@ -15,7 +15,8 @@ class Company(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    users = db.relationship('User', backref='company', lazy=True)
+    users = db.relationship('User', foreign_keys='User.company_id', backref='company', lazy=True)
+    external_users = db.relationship('User', foreign_keys='User.external_company_access', backref='external_company', lazy=True)
     rooms = db.relationship('Room', backref='company', lazy=True)
     bookings = db.relationship('Booking', backref='company', lazy=True)
     invitations = db.relationship('Invitation', backref='company', lazy=True)
@@ -33,6 +34,7 @@ class Invitation(db.Model):
     invited_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
     guest_duration_days = db.Column(db.Integer, nullable=True)  # For guest accounts
+    invitation_metadata = db.Column(db.Text, nullable=True)  # JSON string for additional data
     is_used = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -92,6 +94,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     role = db.Column(db.String(20), default='employee')  # 'admin', 'manager', 'employee', 'guest'
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
+    external_company_access = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)  # For cross-company access
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=True)  # For guest accounts
     
@@ -138,24 +141,45 @@ class User(UserMixin, db.Model):
         """Check if user can manage company settings"""
         return self.role == 'admin'
     
+    def get_accessible_company_id(self):
+        """Get the company ID this user has access to (own or external)"""
+        return self.company_id or self.external_company_access
+    
+    def is_external_user(self):
+        """Check if this user is accessing another company's data"""
+        return self.external_company_access is not None
+    
+    def can_access_company(self, company_id):
+        """Check if user can access a specific company's data"""
+        accessible_company = self.get_accessible_company_id()
+        return accessible_company == company_id
+    
     def can_see_user(self, other_user):
         """Check if user can see another user's information"""
+        # Get the company this user has access to (either their own or external)
+        user_company_id = self.company_id or self.external_company_access
+        
         if self.role == 'admin':
-            return other_user.company_id == self.company_id
+            # Admins can see users from their own company only
+            return other_user.company_id == user_company_id
         elif self.role == 'manager':
-            # Managers can see employees and guests, but not other managers or admins
-            return (other_user.company_id == self.company_id and 
+            # Managers can see employees and guests from their company only
+            return (other_user.company_id == user_company_id and 
                    other_user.role in ['employee', 'guest'])
         else:
             return False
     
     def can_edit_user(self, other_user):
         """Check if user can edit another user"""
+        # Get the company this user has access to (either their own or external)
+        user_company_id = self.company_id or self.external_company_access
+        
         if self.role == 'admin':
-            return other_user.company_id == self.company_id
+            # Admins can edit users from their own company only
+            return other_user.company_id == user_company_id
         elif self.role == 'manager':
-            # Managers can only edit employees and guests
-            return (other_user.company_id == self.company_id and 
+            # Managers can only edit employees and guests from their company
+            return (other_user.company_id == user_company_id and 
                    other_user.role in ['employee', 'guest'])
         else:
             return False

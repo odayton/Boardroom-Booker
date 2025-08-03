@@ -107,13 +107,13 @@ def register():
                     db.session.add(company)
                     db.session.flush()  # Get the company ID
                 
-                # Create user (first user in company becomes owner)
-                is_owner = len(company.users) == 0
+                # Create user (first user in company becomes admin)
+                is_admin = len(company.users) == 0
                 user = User(
                     email=email,
                     name=name,
                     company_id=company.id,
-                    role='owner' if is_owner else 'employee'
+                    role='admin' if is_admin else 'employee'
                 )
             else:
                 # User doesn't want to associate with a company

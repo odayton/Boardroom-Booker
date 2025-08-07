@@ -7,4 +7,31 @@
 @import 'layout.css';
 
 /* Component-specific styles */
-@import 'components.css'; 
+@import 'components.css';
+
+/* Sidebar and navigation */
+@import 'sidebar.css';
+
+/* Forms and inputs */
+@import 'forms.css';
+
+/* Buttons and interactive elements */
+@import 'buttons.css';
+
+/* Cards and containers */
+@import 'cards.css';
+
+/* Modals and overlays */
+@import 'modals.css';
+
+/* Tables and data display */
+@import 'tables.css';
+
+/* Calendar specific styles */
+@import 'calendar.css';
+
+/* Utilities and helpers */
+@import 'utilities.css';
+
+/* Responsive design */
+@import 'responsive.css'; 

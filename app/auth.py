@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
-from app.models import User, Company
+from app.models import User, Company, Invitation
 from app import db
 import re
 
@@ -11,7 +11,9 @@ bp = Blueprint('auth', __name__)
 def validate_domain(email, company_domain):
     """Validate that user's email domain matches company domain"""
     user_domain = email.split('@')[1].lower()
-    return user_domain == company_domain.lower()
+    # Remove @ symbol from company domain if present
+    clean_company_domain = company_domain.replace('@', '').lower()
+    return user_domain == clean_company_domain
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -146,14 +148,38 @@ def login():
         if not email or not password:
             return {'success': False, 'error': 'Email and password are required'}, 400
         
+        # First, check if this might be an invitation code
+        invitation = Invitation.query.filter_by(code=password).first()
+        
+        if invitation and invitation.email.lower() == email:
+            # This is an invitation code - validate it
+            if invitation.is_used:
+                return {'success': False, 'error': 'Invitation has already been used'}, 400
+            
+            if invitation.is_expired():
+                return {'success': False, 'error': 'Invitation has expired'}, 400
+            
+            # Check if user already exists
+            user = User.query.filter_by(email=email).first()
+            
+            if user:
+                # User exists but is trying to use invitation code
+                return {'success': False, 'error': 'User already exists. Please use your password to login.'}, 400
+            
+            # This is a valid invitation code for a new user
+            # We need to redirect them to complete the registration
+            return {
+                'success': False, 
+                'error': 'Please complete your registration first',
+                'invitation_code': password,
+                'redirect_to_register': True
+            }, 400
+        
+        # Regular login attempt
         user = User.query.filter_by(email=email).first()
         
         if user and user.check_password(password):
             login_user(user)
-            
-            # Check if user logged in with invitation code (temporary password)
-            # This would require additional logic to track invitation codes
-            # For now, we'll just return success
             return {'success': True, 'message': 'Login successful'}, 200
         else:
             return {'success': False, 'error': 'Invalid email or password'}, 401
@@ -183,5 +209,6 @@ def check_domain():
         'domain_exists': company is not None,
         'company_name': company.name if company else None
     }
+
 
 

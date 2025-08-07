@@ -13,11 +13,14 @@ html {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background-color: #fafbfc;
+    background-color: var(--gray-50);
     color: #1a202c;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
 }
 
 /* Modern Color Palette */
@@ -56,6 +59,16 @@ body {
     --error-50: #fef2f2;
     --error-500: #ef4444;
     --error-600: #dc2626;
+    
+    /* Additional Colors for Role Badges */
+    --purple-100: #f3e8ff;
+    --purple-800: #6b21a8;
+    --blue-100: #dbeafe;
+    --blue-800: #1e40af;
+    --red-100: #fee2e2;
+    --red-800: #991b1b;
+    --green-100: #dcfce7;
+    --green-800: #166534;
     
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);

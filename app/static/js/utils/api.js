@@ -12,8 +12,11 @@ window.ApiUtils = {
      * @returns {Promise} - Promise with response data
      */
     fetchWithErrorHandling: async function(url, options = {}) {
+        console.log('🌐 API call to:', url);
+        console.log('🔧 Options:', options);
         try {
             const response = await fetch(url, {
+                credentials: 'include', // Include cookies for session authentication
                 headers: {
                     'Content-Type': 'application/json',
                     ...options.headers
@@ -21,15 +24,21 @@ window.ApiUtils = {
                 ...options
             });
 
+            console.log('📊 Response status:', response.status);
+            console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
             const data = await response.json();
+            console.log('📄 Response data:', data);
 
             if (!response.ok) {
+                console.error('❌ API Error - Status:', response.status, 'Data:', data);
                 throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
             }
 
+            console.log('✅ API call successful');
             return data;
         } catch (error) {
-            console.error('API Error:', error);
+            console.error('💥 API Error:', error);
             throw error;
         }
     },

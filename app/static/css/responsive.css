@@ -1,0 +1,339 @@
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Mobile First Approach */
+
+/* Extra Small Devices (phones, 576px and down) */
+@media (max-width: 575.98px) {
+    .container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .page-container {
+        padding: 0 0.5rem;
+    }
+    
+    .modal {
+        margin: 0.5rem;
+        max-width: none;
+        width: calc(100% - 1rem);
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+    
+    .grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table-responsive .table {
+        min-width: 600px;
+    }
+    
+    .table-filters {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .table-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .table-pagination {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .fc-header-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .fc-button {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+    
+    .calendar-outer {
+        height: auto;
+        min-height: 600px;
+    }
+    
+    .sidebar {
+        width: 100%;
+        max-width: 20rem;
+    }
+    
+    .mobile-sidebar {
+        width: 100%;
+        max-width: 20rem;
+    }
+    
+    .navbar-container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .card-grid-2,
+    .card-grid-3,
+    .card-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Small Devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .page-container {
+        padding: 0 1rem;
+    }
+    
+    .card-grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .card-grid-3,
+    .card-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Medium Devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+    .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    .page-container {
+        padding: 0 1.5rem;
+    }
+    
+    .mobile-header {
+        display: none;
+    }
+    
+    .mobile-sidebar-overlay {
+        display: none !important;
+    }
+    
+    .card-grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .card-grid-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .navbar-container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    .form-row {
+        flex-direction: row;
+        gap: 1rem;
+    }
+}
+
+/* Large Devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    
+    .page-container {
+        padding: 0 2rem;
+    }
+    
+    .card-grid-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .navbar-container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+/* Extra Large Devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+    
+    .page-container {
+        max-width: 80rem;
+    }
+}
+
+/* Extra Extra Large Devices (larger desktops, 1400px and up) */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1320px;
+    }
+}
+
+/* Landscape Orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+    .modal {
+        max-height: 95vh;
+    }
+    
+    .calendar-outer {
+        height: 80vh;
+    }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .btn,
+    .form-input,
+    .form-select {
+        border-width: 0.5px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    .mobile-header,
+    .mobile-sidebar-overlay,
+    .navbar,
+    .modal-overlay,
+    .btn,
+    .form-actions {
+        display: none !important;
+    }
+    
+    .main-content {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .page-container {
+        max-width: none !important;
+        padding: 0 !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+    
+    .table {
+        border-collapse: collapse !important;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #000 !important;
+    }
+    
+    .fc-event {
+        border: 1px solid #000 !important;
+        background: none !important;
+        color: #000 !important;
+    }
+    
+    * {
+        color: #000 !important;
+        background: transparent !important;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Dark Mode Support (Future) */
+@media (prefers-color-scheme: dark) {
+    /* Dark mode styles can be added here in the future */
+}
+
+/* Focus Visible */
+@media (prefers-reduced-motion: no-preference) {
+    .focus-visible {
+        outline: 2px solid var(--primary-600);
+        outline-offset: 2px;
+    }
+}
+
+/* Container Queries (Future) */
+@container (min-width: 400px) {
+    .card-responsive {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Hover Support */
+@media (hover: hover) {
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@media (hover: none) {
+    .btn:hover,
+    .card:hover {
+        transform: none;
+    }
+} 

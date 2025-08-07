@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, jsonify, request, redirect, url_fo
 from flask_login import login_required, current_user, login_user, logout_user
 from .models import Booking, User, Company, Room, Invitation
 from app import db
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 
 # Import our new Microsoft service
@@ -40,10 +40,19 @@ def manager_required(f):
     """Decorator to ensure user is a manager or admin"""
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
+        print(f"🔐 manager_required decorator called")
+        print(f"👤 Current user authenticated: {current_user.is_authenticated}")
+        if current_user.is_authenticated:
+            print(f"👤 Current user: {current_user.name} ({current_user.role})")
+            print(f"👤 Can manage users: {current_user.can_manage_users()}")
+        
         if not current_user.is_authenticated:
+            print("❌ User not authenticated")
             return jsonify({'success': False, 'error': 'Authentication required'}), 401
         if not current_user.can_manage_users():
+            print("❌ User cannot manage users")
             return jsonify({'success': False, 'error': 'Manager or Admin access required'}), 403
+        print("✅ User authorized")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -98,6 +107,13 @@ def user_management():
     """User management page for managers and admins"""
     return render_template('management/user_management.html', title='User Management')
 
+@bp.route('/company-management')
+@login_required
+@admin_required
+def company_management():
+    """Company management page for admins only"""
+    return render_template('management/company_management.html', title='Company Management')
+
 
 
 @bp.route('/login/microsoft')
@@ -136,23 +152,36 @@ def google_callback():
 @bp.route('/api/rooms', methods=['GET'])
 @company_required
 def get_rooms():
-    """Get all rooms for the current user's company"""
-    rooms = Room.query.filter_by(company_id=current_user.company_id).all()
-    return jsonify([{
-        'id': room.id,
-        'name': room.name,
-        'description': room.description,
-        'capacity': room.capacity,
-        'room_type': room.room_type,
-        'location': room.location,
-        'equipment': room.get_equipment_list(),
-        'status': room.status,
-        'access_level': room.access_level,
-        'operating_hours_start': room.operating_hours_start.strftime('%H:%M') if room.operating_hours_start else None,
-        'operating_hours_end': room.operating_hours_end.strftime('%H:%M') if room.operating_hours_end else None,
-        'created_at': room.created_at.isoformat() if room.created_at else None,
-        'updated_at': room.updated_at.isoformat() if room.updated_at else room.created_at.isoformat() if room.created_at else None
-    } for room in rooms])
+    """Get all rooms visible to the current user's company"""
+    # Get rooms that are visible to the current user's company
+    rooms = Room.query.filter(
+        (Room.company_id == current_user.company_id) |  # Own company's rooms
+        (Room.visibility_type == 'public') |  # Public rooms
+        (Room.visibility_type == 'specific_companies') &  # Rooms shared with specific companies
+        (Room.visible_companies.contains(str(current_user.company_id)))  # Current company is in the list
+    ).all()
+    
+    return jsonify({
+        'rooms': [{
+            'id': room.id,
+            'name': room.name,
+            'description': room.description,
+            'capacity': room.capacity,
+            'room_type': room.room_type,
+            'location': room.location,
+            'equipment': room.get_equipment_list(),
+            'status': room.status,
+            'access_level': room.access_level,
+            'operating_hours_start': room.operating_hours_start.strftime('%H:%M') if room.operating_hours_start else None,
+            'operating_hours_end': room.operating_hours_end.strftime('%H:%M') if room.operating_hours_end else None,
+            'visibility_type': room.visibility_type,
+            'visible_companies': room.get_visible_companies_list(),
+            'company_id': room.company_id,
+            'company_name': room.company.name if room.company else None,
+            'created_at': room.created_at.isoformat() if room.created_at else None,
+            'updated_at': room.updated_at.isoformat() if room.updated_at else room.created_at.isoformat() if room.created_at else None
+        } for room in rooms]
+    })
 
 # User Management Endpoints
 @bp.route('/api/users', methods=['GET'])
@@ -160,13 +189,22 @@ def get_rooms():
 @manager_required
 def get_users():
     """Get all users for the current user's company (filtered by role hierarchy)"""
+    print(f"🔍 API /api/users called by user: {current_user.name} ({current_user.role})")
+    print(f"🏢 User's company ID: {current_user.company_id}")
+    
     # Get all users in the company
     all_users = User.query.filter_by(company_id=current_user.company_id).all()
+    print(f"👥 All users in company: {len(all_users)}")
+    for user in all_users:
+        print(f"  - {user.name} ({user.role})")
     
     # Filter users based on role hierarchy
     visible_users = [user for user in all_users if current_user.can_see_user(user)]
+    print(f"👀 Visible users: {len(visible_users)}")
+    for user in visible_users:
+        print(f"  - {user.name} ({user.role}) - can_see: {current_user.can_see_user(user)}")
     
-    return jsonify([{
+    result = [{
         'id': user.id,
         'name': user.name,
         'email': user.email,
@@ -175,7 +213,10 @@ def get_users():
         'expires_at': user.expires_at.isoformat() if user.expires_at else None,
         'is_active': user.is_active_user(),
         'created_at': user.created_at.isoformat() if user.created_at else None
-    } for user in visible_users])
+    } for user in visible_users]
+    
+    print(f"📤 Returning {len(result)} users")
+    return jsonify(result)
 
 @bp.route('/api/users/invite', methods=['POST'])
 @company_required
@@ -545,9 +586,11 @@ def create_room():
         location=data.get('location'),
         status=data.get('status', 'available'),
         access_level=data.get('access_level', 'all'),
-        operating_hours_start=datetime.strptime(data['operating_hours_start'], '%H:%M').time() if data.get('operating_hours_start') else None,
-        operating_hours_end=datetime.strptime(data['operating_hours_end'], '%H:%M').time() if data.get('operating_hours_end') else None,
-        company_id=current_user.company_id
+        operating_hours_start=datetime.strptime(data['operating_hours_start'], '%H:%M').time() if data.get('operating_hours_start') and data['operating_hours_start'].strip() and data['operating_hours_start'] != '' else None,
+        operating_hours_end=datetime.strptime(data['operating_hours_end'], '%H:%M').time() if data.get('operating_hours_end') and data['operating_hours_end'].strip() and data['operating_hours_end'] != '' else None,
+        company_id=current_user.company_id,
+        visibility_type=data.get('visibility_type', 'company'),
+        visible_companies=data.get('visible_companies')
     )
     
     # Set equipment
@@ -570,7 +613,10 @@ def create_room():
             'status': room.status,
             'access_level': room.access_level,
             'operating_hours_start': room.operating_hours_start.strftime('%H:%M') if room.operating_hours_start else None,
-            'operating_hours_end': room.operating_hours_end.strftime('%H:%M') if room.operating_hours_end else None
+            'operating_hours_end': room.operating_hours_end.strftime('%H:%M') if room.operating_hours_end else None,
+            'visibility_type': room.visibility_type,
+            'visible_companies': room.get_visible_companies_list(),
+            'company_id': room.company_id
         }
     }), 201
 
@@ -606,14 +652,19 @@ def update_room(room_id):
     room.location = data.get('location')
     room.status = data.get('status', 'available')
     room.access_level = data.get('access_level', 'all')
+    room.visibility_type = data.get('visibility_type', 'company')
+    
+    # Handle visible companies
+    if data.get('visible_companies') is not None:
+        room.set_visible_companies_list(data['visible_companies'])
     
     # Handle time fields
-    if data.get('operating_hours_start'):
+    if data.get('operating_hours_start') and data['operating_hours_start'].strip() and data['operating_hours_start'] != '':
         room.operating_hours_start = datetime.strptime(data['operating_hours_start'], '%H:%M').time()
     else:
         room.operating_hours_start = None
         
-    if data.get('operating_hours_end'):
+    if data.get('operating_hours_end') and data['operating_hours_end'].strip() and data['operating_hours_end'] != '':
         room.operating_hours_end = datetime.strptime(data['operating_hours_end'], '%H:%M').time()
     else:
         room.operating_hours_end = None
@@ -715,10 +766,36 @@ def new_booking():
         if not title or len(title) > 120:
             return jsonify({'success': False, 'error': 'Invalid title provided.'}), 400
 
-        start_time = datetime.fromisoformat(data['start_time'])
-        end_time = datetime.fromisoformat(data['end_time'])
+        # Parse dates in DD-MM-YYYY format
+        start_date_str = data['start_time'].split('T')[0]
+        end_date_str = data['end_time'].split('T')[0]
+        
+        # Convert DD-MM-YYYY to YYYY-MM-DD for datetime parsing
+        def convert_date_format(date_str):
+            if '-' in date_str and len(date_str.split('-')[0]) == 2:
+                # Format is DD-MM-YYYY, convert to YYYY-MM-DD
+                parts = date_str.split('-')
+                if len(parts) == 3:
+                    day, month, year = parts
+                    return f"{year}-{month}-{day}"
+            return date_str  # Already in YYYY-MM-DD format
+        
+        start_date_formatted = convert_date_format(start_date_str)
+        end_date_formatted = convert_date_format(end_date_str)
+        
+        start_time = datetime.fromisoformat(f"{start_date_formatted}T{data['start_time'].split('T')[1]}")
+        end_time = datetime.fromisoformat(f"{end_date_formatted}T{data['end_time'].split('T')[1]}")
         room_id = data['room_id']
+        
+        # Handle new visibility system
+        visibility_type = data.get('visibility_type', 'all_companies')
+        selected_companies = data.get('selected_companies', [])
+        
+        # Legacy support for is_public
         is_public = data.get('is_public', True)
+        if 'is_public' in data and 'visibility_type' not in data:
+            # Convert legacy boolean to new system
+            visibility_type = 'all_companies' if is_public else 'owner_company'
 
         if start_time >= end_time:
             return jsonify({'success': False, 'error': 'End time must be after start time.'}), 400
@@ -749,7 +826,9 @@ def new_booking():
             room_id=room_id,
             company_id=current_user.company_id,
             user_id=current_user.id,
-            is_public=is_public
+            is_public=is_public,  # Legacy field
+            visibility_type=visibility_type,
+            visible_companies=json.dumps(selected_companies) if selected_companies else None
         )
         
         db.session.add(new_booking)
@@ -788,10 +867,36 @@ def update_booking(booking_id):
         if not title or len(title) > 120:
             return jsonify({'success': False, 'error': 'Invalid title provided.'}), 400
         
-        start_time = datetime.fromisoformat(data['start_time'])
-        end_time = datetime.fromisoformat(data['end_time'])
+        # Parse dates in DD-MM-YYYY format
+        start_date_str = data['start_time'].split('T')[0]
+        end_date_str = data['end_time'].split('T')[0]
+        
+        # Convert DD-MM-YYYY to YYYY-MM-DD for datetime parsing
+        def convert_date_format(date_str):
+            if '-' in date_str and len(date_str.split('-')[0]) == 2:
+                # Format is DD-MM-YYYY, convert to YYYY-MM-DD
+                parts = date_str.split('-')
+                if len(parts) == 3:
+                    day, month, year = parts
+                    return f"{year}-{month}-{day}"
+            return date_str  # Already in YYYY-MM-DD format
+        
+        start_date_formatted = convert_date_format(start_date_str)
+        end_date_formatted = convert_date_format(end_date_str)
+        
+        start_time = datetime.fromisoformat(f"{start_date_formatted}T{data['start_time'].split('T')[1]}")
+        end_time = datetime.fromisoformat(f"{end_date_formatted}T{data['end_time'].split('T')[1]}")
         room_id = data.get('room_id', booking.room_id)
+        
+        # Handle new visibility system
+        visibility_type = data.get('visibility_type', booking.visibility_type or 'all_companies')
+        selected_companies = data.get('selected_companies', [])
+        
+        # Legacy support for is_public
         is_public = data.get('is_public', booking.is_public)
+        if 'is_public' in data and 'visibility_type' not in data:
+            # Convert legacy boolean to new system
+            visibility_type = 'all_companies' if is_public else 'owner_company'
 
         if start_time >= end_time:
             return jsonify({'success': False, 'error': 'End time must be after start time.'}), 400
@@ -821,7 +926,9 @@ def update_booking(booking_id):
         booking.start_time = start_time
         booking.end_time = end_time
         booking.room_id = room_id
-        booking.is_public = is_public
+        booking.is_public = is_public  # Legacy field
+        booking.visibility_type = visibility_type
+        booking.visible_companies = json.dumps(selected_companies) if selected_companies else None
         
         db.session.commit()
         return jsonify({'success': True})
@@ -869,3 +976,366 @@ def get_current_user():
             'can_manage_rooms': current_user.can_manage_rooms()
         }
     })
+
+# Company Management Endpoints
+@bp.route('/api/company', methods=['GET'])
+@company_required
+@admin_required
+def get_company():
+    """Get current company information"""
+    company = Company.query.get(current_user.company_id)
+    if not company:
+        return jsonify({'success': False, 'error': 'Company not found'}), 404
+    
+    return jsonify({
+        'success': True,
+        'company': {
+            'id': company.id,
+            'name': company.name,
+            'domain': company.domain,
+            'created_at': company.created_at.isoformat() if company.created_at else None
+        }
+    })
+
+@bp.route('/api/company', methods=['PUT'])
+@company_required
+@admin_required
+def update_company():
+    """Update company information"""
+    company = Company.query.get(current_user.company_id)
+    if not company:
+        return jsonify({'success': False, 'error': 'Company not found'}), 404
+    
+    try:
+        data = request.get_json()
+        
+        name = data.get('name', '').strip()
+        domain = data.get('domain', '').strip()
+        
+        if not name or len(name) > 120:
+            return jsonify({'success': False, 'error': 'Invalid company name provided.'}), 400
+        
+        if not domain or len(domain) > 120:
+            return jsonify({'success': False, 'error': 'Invalid domain provided.'}), 400
+        
+        # Check if domain contains @ symbol
+        if '@' not in domain:
+            return jsonify({'success': False, 'error': 'Domain must contain an @ symbol (e.g., @company.com).'}), 400
+        
+        # Check if domain is already taken by another company
+        existing_company = Company.query.filter(
+            Company.domain == domain,
+            Company.id != company.id
+        ).first()
+        
+        if existing_company:
+            return jsonify({'success': False, 'error': 'Domain is already in use by another company.'}), 409
+        
+        company.name = name
+        company.domain = domain
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating company: {e}")
+        return jsonify({'success': False, 'error': 'An unexpected error occurred.'}), 500
+
+@bp.route('/api/company/stats', methods=['GET'])
+@company_required
+@admin_required
+def get_company_stats():
+    """Get company statistics"""
+    company_id = current_user.company_id
+    
+    # Get counts
+    user_count = User.query.filter_by(company_id=company_id).count()
+    room_count = Room.query.filter_by(company_id=company_id).count()
+    booking_count = Booking.query.filter_by(company_id=company_id).count()
+    active_invitation_count = Invitation.query.filter_by(
+        company_id=company_id,
+        is_used=False
+    ).filter(Invitation.expires_at > datetime.utcnow()).count()
+    
+    # Get recent activity
+    recent_bookings = Booking.query.filter_by(company_id=company_id)\
+        .order_by(Booking.created_at.desc())\
+        .limit(5).all()
+    
+    recent_users = User.query.filter_by(company_id=company_id)\
+        .order_by(User.created_at.desc())\
+        .limit(5).all()
+    
+    return jsonify({
+        'success': True,
+        'stats': {
+            'user_count': user_count,
+            'room_count': room_count,
+            'booking_count': booking_count,
+            'active_invitation_count': active_invitation_count
+        },
+        'recent_bookings': [{
+            'id': booking.id,
+            'title': booking.title,
+            'start_time': booking.start_time.isoformat(),
+            'end_time': booking.end_time.isoformat(),
+            'created_at': booking.created_at.isoformat()
+        } for booking in recent_bookings],
+        'recent_users': [{
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'role': user.role,
+            'created_at': user.created_at.isoformat()
+        } for user in recent_users]
+    })
+
+@bp.route('/api/companies/overview', methods=['GET'])
+@company_required
+@admin_required
+def get_companies_overview():
+    """Get overview of all companies (admin only sees their own company)"""
+    admin_company_id = current_user.company_id
+    
+    # Get all companies but admin only sees their own company's data
+    companies = Company.query.all()
+    
+    companies_data = []
+    for company in companies:
+        # Only show detailed stats for admin's own company
+        if company.id == admin_company_id:
+            # Get detailed stats for admin's company
+            user_count = User.query.filter_by(company_id=company.id).count()
+            booking_count = Booking.query.filter_by(company_id=company.id).count()
+            
+            # Get upcoming bookings (next 7 days)
+            upcoming_bookings = Booking.query.filter_by(company_id=company.id)\
+                .filter(Booking.start_time >= datetime.utcnow())\
+                .filter(Booking.start_time <= datetime.utcnow() + timedelta(days=7))\
+                .order_by(Booking.start_time.asc())\
+                .limit(5).all()
+            
+            companies_data.append({
+                'id': company.id,
+                'name': company.name,
+                'domain': company.domain,
+                'created_at': company.created_at.isoformat() if company.created_at else None,
+                'user_count': user_count,
+                'booking_count': booking_count,
+                'upcoming_bookings': [{
+                    'id': booking.id,
+                    'title': booking.title,
+                    'start_time': booking.start_time.isoformat(),
+                    'end_time': booking.end_time.isoformat(),
+                    'room_name': booking.room.name if booking.room else 'No room assigned'
+                } for booking in upcoming_bookings],
+                'is_own_company': True
+            })
+        else:
+            # For other companies, only show basic info (no detailed stats)
+            companies_data.append({
+                'id': company.id,
+                'name': company.name,
+                'domain': company.domain,
+                'created_at': company.created_at.isoformat() if company.created_at else None,
+                'user_count': None,  # Hidden for other companies
+                'booking_count': None,  # Hidden for other companies
+                'upcoming_bookings': [],  # Hidden for other companies
+                'is_own_company': False
+            })
+    
+    return jsonify({
+        'success': True,
+        'companies': companies_data
+    })
+
+# Company CRUD Operations
+@bp.route('/api/companies', methods=['GET'])
+@company_required
+@admin_required
+def get_all_companies():
+    """Get all companies (admin only)"""
+    companies = Company.query.all()
+    
+    return jsonify({
+        'success': True,
+        'companies': [{
+            'id': company.id,
+            'name': company.name,
+            'domain': company.domain,
+            'created_at': company.created_at.isoformat() if company.created_at else None
+        } for company in companies]
+    })
+
+@bp.route('/api/companies', methods=['POST'])
+@company_required
+@admin_required
+def create_company():
+    """Create a new company (admin only)"""
+    try:
+        data = request.get_json()
+        
+        name = data.get('name', '').strip()
+        domain = data.get('domain', '').strip()
+        
+        if not name or len(name) > 120:
+            return jsonify({'success': False, 'error': 'Invalid company name provided.'}), 400
+        
+        if not domain or len(domain) > 120:
+            return jsonify({'success': False, 'error': 'Invalid domain provided.'}), 400
+        
+        # Check if domain contains @ symbol
+        if '@' not in domain:
+            return jsonify({'success': False, 'error': 'Domain must contain an @ symbol (e.g., @company.com).'}), 400
+        
+        # Check if domain is already taken
+        existing_company = Company.query.filter_by(domain=domain).first()
+        if existing_company:
+            return jsonify({'success': False, 'error': 'Domain is already in use by another company.'}), 409
+        
+        # Create new company
+        new_company = Company(name=name, domain=domain)
+        db.session.add(new_company)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'company': {
+                'id': new_company.id,
+                'name': new_company.name,
+                'domain': new_company.domain,
+                'created_at': new_company.created_at.isoformat() if new_company.created_at else None
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating company: {e}")
+        return jsonify({'success': False, 'error': 'An unexpected error occurred.'}), 500
+
+@bp.route('/api/companies/<int:company_id>', methods=['GET'])
+@company_required
+@admin_required
+def get_company_by_id(company_id):
+    """Get a specific company by ID (admin only)"""
+    company = Company.query.get(company_id)
+    
+    if not company:
+        return jsonify({'success': False, 'error': 'Company not found'}), 404
+    
+    return jsonify({
+        'success': True,
+        'company': {
+            'id': company.id,
+            'name': company.name,
+            'domain': company.domain,
+            'created_at': company.created_at.isoformat() if company.created_at else None
+        }
+    })
+
+@bp.route('/api/companies/<int:company_id>', methods=['PUT'])
+@company_required
+@admin_required
+def update_company_by_id(company_id):
+    """Update a specific company by ID (admin only)"""
+    company = Company.query.get(company_id)
+    
+    if not company:
+        return jsonify({'success': False, 'error': 'Company not found'}), 404
+    
+    try:
+        data = request.get_json()
+        
+        name = data.get('name', '').strip()
+        domain = data.get('domain', '').strip()
+        
+        if not name or len(name) > 120:
+            return jsonify({'success': False, 'error': 'Invalid company name provided.'}), 400
+        
+        if not domain or len(domain) > 120:
+            return jsonify({'success': False, 'error': 'Invalid domain provided.'}), 400
+        
+        # Check if domain contains @ symbol
+        if '@' not in domain:
+            return jsonify({'success': False, 'error': 'Domain must contain an @ symbol (e.g., @company.com).'}), 400
+        
+        # Check if domain is already taken by another company
+        existing_company = Company.query.filter(
+            Company.domain == domain,
+            Company.id != company_id
+        ).first()
+        
+        if existing_company:
+            return jsonify({'success': False, 'error': 'Domain is already in use by another company.'}), 409
+        
+        company.name = name
+        company.domain = domain
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating company: {e}")
+        return jsonify({'success': False, 'error': 'An unexpected error occurred.'}), 500
+
+@bp.route('/api/companies/list', methods=['GET'])
+@company_required
+def get_companies_list():
+    """Get a simple list of all companies for dropdowns"""
+    companies = Company.query.all()
+    return jsonify({
+        'companies': [{
+            'id': company.id,
+            'name': company.name,
+            'domain': company.domain
+        } for company in companies]
+    })
+
+@bp.route('/api/companies/<int:company_id>', methods=['DELETE'])
+@company_required
+@admin_required
+def delete_company_by_id(company_id):
+    """Delete a specific company by ID (admin only)"""
+    company = Company.query.get(company_id)
+    
+    if not company:
+        return jsonify({'success': False, 'error': 'Company not found'}), 404
+    
+    # Check if this is the admin's own company
+    if company.id == current_user.company_id:
+        return jsonify({'success': False, 'error': 'Cannot delete your own company.'}), 400
+    
+    try:
+        # Get counts for warning purposes
+        user_count = User.query.filter_by(company_id=company_id).count()
+        room_count = Room.query.filter_by(company_id=company_id).count()
+        booking_count = Booking.query.filter_by(company_id=company_id).count()
+        
+        # Delete all related data first (cascade delete)
+        # Delete bookings
+        Booking.query.filter_by(company_id=company_id).delete()
+        
+        # Delete rooms
+        Room.query.filter_by(company_id=company_id).delete()
+        
+        # Delete invitations
+        Invitation.query.filter_by(company_id=company_id).delete()
+        
+        # Delete users (this will cascade to any other related data)
+        User.query.filter_by(company_id=company_id).delete()
+        
+        # Finally delete the company
+        db.session.delete(company)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Company "{company.name}" deleted successfully. Removed {user_count} users, {room_count} rooms, and {booking_count} bookings.'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting company: {e}")
+        return jsonify({'success': False, 'error': 'An unexpected error occurred while deleting the company.'}), 500

@@ -1,0 +1,992 @@
+/* ===== FORM STYLES ===== */
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+/* Form Labels */
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+/* Form Inputs */
+.form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Time and Date Inputs */
+input[type="time"],
+input[type="date"],
+input[type="datetime-local"] {
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+}
+
+input[type="time"]:hover,
+input[type="date"]:hover,
+input[type="datetime-local"]:hover {
+    border-color: var(--primary-500);
+}
+
+/* Ensure readonly date inputs are still clickable */
+input[type="date"][readonly] {
+    cursor: pointer;
+    background-color: white;
+    color: var(--gray-700);
+}
+
+input[type="date"][readonly]:hover {
+    border-color: var(--primary-500);
+}
+
+/* Custom Date Picker Styles */
+#custom-date-picker .grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 0 !important;
+}
+
+/* Modern Date Picker Navigation Buttons */
+#prev-month,
+#next-month {
+    position: relative;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+#prev-month:hover,
+#next-month:hover {
+    transform: scale(1.05);
+    background: transparent;
+}
+
+#prev-month:active,
+#next-month:active {
+    transform: scale(0.95);
+    background: transparent;
+}
+
+/* Recurring Date Picker Navigation Buttons */
+#recurring-prev-month,
+#recurring-next-month {
+    position: relative;
+    background: transparent !important;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+#recurring-prev-month:hover,
+#recurring-next-month:hover {
+    transform: scale(1.05);
+    background: transparent !important;
+}
+
+#recurring-prev-month:active,
+#recurring-next-month:active {
+    transform: scale(0.95);
+    background: transparent !important;
+}
+
+#calendar-grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 0 !important;
+}
+
+#calendar-grid > div {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 0.375rem;
+}
+
+#calendar-grid > div:hover {
+    background-color: var(--primary-100);
+    color: var(--primary-700);
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#custom-date-picker .grid > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 20px;
+}
+
+/* Recurring Date Picker Grid Styles */
+#recurring-calendar-grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 0 !important;
+}
+
+#recurring-calendar-grid > div {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 0.375rem;
+}
+
+#recurring-calendar-grid > div:hover {
+    background-color: var(--primary-100);
+    color: var(--primary-700);
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Make the date field responsive */
+#date-display {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#date-display:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+@media (max-width: 768px) {
+    #date-display {
+        font-size: 0.875rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+}
+
+/* Ensure date picker is clickable */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    background: transparent;
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Ensure time picker is clickable */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    background: transparent;
+    position: relative;
+    z-index: 2;
+}
+
+/* ===== NEW TIME PICKER STYLES ===== */
+.time-picker-section {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.time-picker-group {
+    flex: 1;
+}
+
+.time-inputs {
+    display: flex;
+    gap: 1rem;
+}
+
+.time-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.time-dropdown-btn {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    color: var(--gray-700);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.time-dropdown-btn:hover {
+    border-color: var(--primary-500);
+}
+
+.time-dropdown-btn:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.dropdown-arrow {
+    width: 1rem;
+    height: 1rem;
+    color: var(--gray-400);
+    transition: transform 0.2s;
+}
+
+.time-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 0.25rem;
+}
+
+.time-dropdown-menu a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.time-dropdown-menu a:last-child {
+    border-bottom: none;
+}
+
+.time-dropdown-menu a:hover {
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+}
+
+.time-dropdown-menu a:active {
+    background-color: var(--primary-100);
+}
+
+/* Quick Time Presets */
+.time-presets {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.time-preset-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    background-color: white;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-preset-btn:hover {
+    background-color: var(--primary-50);
+    border-color: var(--primary-300);
+    color: var(--primary-700);
+}
+
+.time-preset-btn.active {
+    background-color: var(--primary-600);
+    border-color: var(--primary-600);
+    color: white;
+}
+
+/* Duration Display */
+.duration-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background-color: var(--gray-50);
+    border-radius: var(--radius-md);
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+    transition: all 0.2s;
+}
+
+.duration-display svg {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+.duration-display.show {
+    background-color: var(--primary-50);
+    border-color: var(--primary-200);
+    color: var(--primary-700);
+}
+
+/* Time Picker Validation States */
+.time-picker-group.error .time-dropdown-btn {
+    border-color: var(--error-500);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.time-picker-group.valid .time-dropdown-btn {
+    border-color: var(--success-500);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Recurring Options Enhancement */
+.recurring-option {
+    transition: all 0.2s;
+}
+
+.recurring-option:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.recurring-option input[type="radio"]:checked + div {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+}
+
+/* Form Section Headers */
+.form-section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.form-section-header svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    color: var(--primary-600);
+}
+
+.form-section-header h4 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+/* Loading States */
+.form-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.form-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--primary-600);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Success/Error Messages */
+.form-message {
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.form-message.success {
+    background-color: var(--success-50);
+    border: 1px solid var(--success-200);
+    color: var(--success-700);
+}
+
+.form-message.error {
+    background-color: var(--error-50);
+    border: 1px solid var(--error-200);
+    color: var(--error-700);
+}
+
+/* Enhanced Button States */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Modern Select Styling */
+.form-select-modern {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    /* Remove browser default arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.form-select-modern:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-select-modern:hover {
+    border-color: var(--primary-500);
+}
+
+/* Companies scrollable list styling */
+.companies-scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
+}
+
+.companies-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.companies-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.companies-scrollable::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.companies-scrollable::-webkit-scrollbar-thumb:hover {
+    background-color: var(--gray-400);
+}
+
+/* Ensure checkboxes are properly spaced in scrollable container */
+.companies-scrollable .flex {
+    padding: 0.25rem 0;
+}
+
+.companies-scrollable .flex:hover {
+    background-color: var(--gray-50);
+    border-radius: 0.25rem;
+    padding-left: 0.5rem;
+    margin-left: -0.5rem;
+    transition: all 0.2s;
+}
+
+/* Form Select */
+.form-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    /* Remove browser default arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Form Textarea */
+.form-textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Checkbox and Radio Inputs */
+input[type="radio"],
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+
+input[type="radio"] {
+    border-radius: 50%;
+}
+
+input[type="radio"]:checked,
+input[type="checkbox"]:checked {
+    background-color: var(--primary-600);
+    border-color: var(--primary-600);
+}
+
+input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.25rem;
+    height: 0.25rem;
+    background-color: white;
+    border-radius: 50%;
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* Form Validation */
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+    border-color: var(--error-500);
+}
+
+.form-input.error:focus,
+.form-select.error:focus,
+.form-textarea.error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-message {
+    color: var(--error-600);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.form-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 640px) {
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Form Help Text */
+.form-help {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+}
+
+/* Required Field Indicator */
+.required::after {
+    content: '*';
+    color: var(--error-500);
+    margin-left: 0.25rem;
+}
+
+/* Form Section */
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+/* Form Row */
+.form-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Form Field with Icon */
+.form-field-with-icon {
+    position: relative;
+}
+
+.form-field-with-icon .form-input,
+.form-field-with-icon .form-select {
+    padding-left: 2.5rem;
+}
+
+.form-field-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    pointer-events: none;
+}
+
+.form-field-with-icon .form-input:focus + .form-field-icon,
+.form-field-with-icon .form-select:focus + .form-field-icon {
+    color: var(--primary-600);
+} 
+
+/* ===== ENHANCED TIME PICKER DROPDOWN STYLES ===== */
+/* Time picker button styling */
+#start-hour-btn, #start-minute-btn, #end-hour-btn, #end-minute-btn,
+#edit-start-hour-btn, #edit-start-minute-btn, #edit-end-hour-btn, #edit-end-minute-btn {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background-color: white;
+    color: var(--gray-700);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 2.75rem;
+}
+
+#start-hour-btn:hover, #start-minute-btn:hover, #end-hour-btn:hover, #end-minute-btn:hover,
+#edit-start-hour-btn:hover, #edit-start-minute-btn:hover, #edit-end-hour-btn:hover, #edit-end-minute-btn:hover {
+    border-color: var(--primary-400);
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#start-hour-btn:focus, #start-minute-btn:focus, #end-hour-btn:focus, #end-minute-btn:focus,
+#edit-start-hour-btn:focus, #edit-start-minute-btn:focus, #edit-end-hour-btn:focus, #edit-end-minute-btn:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    background-color: white;
+}
+
+/* Dropdown arrow styling */
+#start-hour-btn svg, #start-minute-btn svg, #end-hour-btn svg, #end-minute-btn svg,
+#edit-start-hour-btn svg, #edit-start-minute-btn svg, #edit-end-hour-btn svg, #edit-end-minute-btn svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--gray-400);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+#start-hour-btn:hover svg, #start-minute-btn:hover svg, #end-hour-btn:hover svg, #end-minute-btn:hover svg,
+#edit-start-hour-btn:hover svg, #edit-start-minute-btn:hover svg, #edit-end-hour-btn:hover svg, #edit-end-minute-btn:hover svg {
+    color: var(--primary-500);
+    transform: rotate(180deg);
+}
+
+/* Dropdown container styling */
+#start-hour-dropdown, #start-minute-dropdown, #end-hour-dropdown, #end-minute-dropdown,
+#edit-start-hour-dropdown, #edit-start-minute-dropdown, #edit-end-hour-dropdown, #edit-end-minute-dropdown {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    max-height: 12rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    backdrop-filter: blur(10px);
+    animation: dropdownSlideIn 0.2s ease-out;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Dropdown animation */
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dropdown option styling */
+#start-hour-dropdown a, #start-minute-dropdown a, #end-hour-dropdown a, #end-minute-dropdown a,
+#edit-start-hour-dropdown a, #edit-start-minute-dropdown a, #edit-end-hour-dropdown a, #edit-end-minute-dropdown a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid var(--gray-100);
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    min-height: 2.5rem;
+}
+
+#start-hour-dropdown a:last-child, #start-minute-dropdown a:last-child, #end-hour-dropdown a:last-child, #end-minute-dropdown a:last-child,
+#edit-start-hour-dropdown a:last-child, #edit-start-minute-dropdown a:last-child, #edit-end-hour-dropdown a:last-child, #edit-end-minute-dropdown a:last-child {
+    border-bottom: none;
+}
+
+#start-hour-dropdown a:hover, #start-minute-dropdown a:hover, #end-hour-dropdown a:hover, #end-minute-dropdown a:hover,
+#edit-start-hour-dropdown a:hover, #edit-start-minute-dropdown a:hover, #edit-end-hour-dropdown a:hover, #edit-end-minute-dropdown a:hover {
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    transform: translateX(4px);
+}
+
+#start-hour-dropdown a:active, #start-minute-dropdown a:active, #end-hour-dropdown a:active, #end-minute-dropdown a:active,
+#edit-start-hour-dropdown a:active, #edit-start-minute-dropdown a:active, #edit-end-hour-dropdown a:active, #edit-end-minute-dropdown a:active {
+    background-color: var(--primary-100);
+    color: var(--primary-800);
+}
+
+/* Scrollbar styling for dropdowns */
+#start-hour-dropdown::-webkit-scrollbar, #start-minute-dropdown::-webkit-scrollbar, #end-hour-dropdown::-webkit-scrollbar, #end-minute-dropdown::-webkit-scrollbar,
+#edit-start-hour-dropdown::-webkit-scrollbar, #edit-start-minute-dropdown::-webkit-scrollbar, #edit-end-hour-dropdown::-webkit-scrollbar, #edit-end-minute-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+#start-hour-dropdown::-webkit-scrollbar-track, #start-minute-dropdown::-webkit-scrollbar-track, #end-hour-dropdown::-webkit-scrollbar-track, #end-minute-dropdown::-webkit-scrollbar-track,
+#edit-start-hour-dropdown::-webkit-scrollbar-track, #edit-start-minute-dropdown::-webkit-scrollbar-track, #edit-end-hour-dropdown::-webkit-scrollbar-track, #edit-end-minute-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+#start-hour-dropdown::-webkit-scrollbar-thumb, #start-minute-dropdown::-webkit-scrollbar-thumb, #end-hour-dropdown::-webkit-scrollbar-thumb, #end-minute-dropdown::-webkit-scrollbar-thumb,
+#edit-start-hour-dropdown::-webkit-scrollbar-thumb, #edit-start-minute-dropdown::-webkit-scrollbar-thumb, #edit-end-hour-dropdown::-webkit-scrollbar-thumb, #edit-end-minute-dropdown::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+#start-hour-dropdown::-webkit-scrollbar-thumb:hover, #start-minute-dropdown::-webkit-scrollbar-thumb:hover, #end-hour-dropdown::-webkit-scrollbar-thumb:hover, #end-minute-dropdown::-webkit-scrollbar-thumb:hover,
+#edit-start-hour-dropdown::-webkit-scrollbar-thumb:hover, #edit-start-minute-dropdown::-webkit-scrollbar-thumb:hover, #edit-end-hour-dropdown::-webkit-scrollbar-thumb:hover, #edit-end-minute-dropdown::-webkit-scrollbar-thumb:hover {
+    background-color: var(--gray-400);
+}
+
+/* Time picker fieldset styling */
+fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+fieldset legend {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+
+/* Time picker grid styling */
+.grid.grid-cols-2.gap-2 {
+    gap: 0.75rem !important;
+}
+
+/* Additional dropdown states */
+#start-hour-btn.selected, #start-minute-btn.selected, #end-hour-btn.selected, #end-minute-btn.selected,
+#edit-start-hour-btn.selected, #edit-start-minute-btn.selected, #edit-end-hour-btn.selected, #edit-end-minute-btn.selected {
+    border-color: var(--primary-600);
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    transition: all 0.2s ease;
+}
+
+/* Remove selected state when dropdown is open */
+#start-hour-btn.dropdown-open.selected, #start-minute-btn.dropdown-open.selected, #end-hour-btn.dropdown-open.selected, #end-minute-btn.dropdown-open.selected,
+#edit-start-hour-btn.dropdown-open.selected, #edit-start-minute-btn.dropdown-open.selected, #edit-end-hour-btn.dropdown-open.selected, #edit-end-minute-btn.dropdown-open.selected {
+    border-color: var(--primary-600);
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+#start-hour-btn.dropdown-open, #start-minute-btn.dropdown-open, #end-hour-btn.dropdown-open, #end-minute-btn.dropdown-open,
+#edit-start-hour-btn.dropdown-open, #edit-start-minute-btn.dropdown-open, #edit-end-hour-btn.dropdown-open, #edit-end-minute-btn.dropdown-open {
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    background-color: var(--primary-50);
+}
+
+/* Time dropdown option specific styling */
+.time-dropdown-option {
+    position: relative;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.time-dropdown-option::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.time-dropdown-option:hover::before {
+    background-color: var(--primary-500);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    #start-hour-btn, #start-minute-btn, #end-hour-btn, #end-minute-btn,
+    #edit-start-hour-btn, #edit-start-minute-btn, #edit-end-hour-btn, #edit-end-minute-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    #start-hour-dropdown, #start-minute-dropdown, #end-hour-dropdown, #end-minute-dropdown,
+    #edit-start-hour-dropdown, #edit-start-minute-dropdown, #edit-end-hour-dropdown, #edit-end-minute-dropdown {
+        max-height: 10rem;
+    }
+    
+    #start-hour-dropdown a, #start-minute-dropdown a, #end-hour-dropdown a, #end-minute-dropdown a,
+    #edit-start-hour-dropdown a, #edit-start-minute-dropdown a, #edit-end-hour-dropdown a, #edit-end-minute-dropdown a {
+        padding: 0.875rem 1rem;
+        font-size: 0.9rem;
+    }
+} 

@@ -30,11 +30,11 @@
         <div class="card-body p-0">
             <div class="overflow-x-auto">
                 <table class="table">
-                    <thead>
+                                                        <thead>
                         <tr>
-                            <th>User</th>
-                            <th>Role</th>
-                            <th>Actions</th>
+                            <th class="text-left">User</th>
+                            <th class="text-left">Role</th>
+                            <th class="text-left">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
@@ -77,11 +77,11 @@
                         <!-- Invitations will be loaded here dynamically -->
                     </tbody>
                 </table>
-                <div id="invitations-loading" class="text-center py-8" style="display: none;">
+                <div id="invitations-loading" class="text-center py-8 hidden">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
                     <p class="text-gray-600">Loading invitations...</p>
                 </div>
-                <div id="invitations-empty" class="text-center py-8" style="display: none;">
+                <div id="invitations-empty" class="text-center py-8 hidden">
                     <div class="max-w-md mx-auto">
                         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4">
                             <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@
 </div>
 
 <!-- Invite User Modal -->
-<div id="invite-modal" class="modal">
+<div id="invite-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-content-lg">
         <div class="p-6">
@@ -183,6 +183,65 @@
                         </div>
                     </div>
                     
+                    <!-- Invitation Type Section -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            Invitation Type
+                        </h4>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-4">
+                                <input type="radio" id="internal-invite" name="invitation_type" value="internal" checked
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="internal-invite" class="flex items-center cursor-pointer">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-900">Internal Company User</span>
+                                        <p class="text-xs text-gray-600">Invite someone from your own company</p>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4">
+                                <input type="radio" id="external-invite" name="invitation_type" value="external"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <label for="external-invite" class="flex items-center cursor-pointer">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-900">External Company User</span>
+                                        <p class="text-xs text-gray-600">Invite someone from another company to access your calendar</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- External Company Info (shown when external is selected) -->
+                        <div id="external-company-info" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg hidden">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <h5 class="text-sm font-medium text-green-800">External Company Access</h5>
+                                    <p class="text-sm text-green-700 mt-1">
+                                        This user will only see your company's calendar data. They cannot access any other company's information, including their own company's data in this system.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Role Assignment Section -->
                     <div class="bg-blue-50 rounded-lg p-6">
                         <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -194,18 +253,17 @@
                         
                         <div class="form-group">
                             <label for="invite-role" class="form-label">Select Role</label>
-                            <select id="invite-role" name="role" required class="form-input form-select">
-                                <option value="">Choose a role for this user</option>
-                                <option value="employee">Employee</option>
+                            <select id="invite-role" name="role" required class="form-select">
+                                <option value="admin" id="invite-admin-option" class="hidden">Admin</option>
                                 <option value="manager">Manager</option>
-                                <option value="admin" id="invite-admin-option" style="display: none;">Admin</option>
+                                <option value="employee">Employee</option>
                                 <option value="guest">Guest</option>
                             </select>
                             <p class="text-sm text-gray-600 mt-2">The role determines the user's permissions and access level</p>
                         </div>
                         
                         <!-- Guest Duration Field (only shown for guest role) -->
-                        <div class="form-group" id="guest-duration-group" style="display: none;">
+                        <div class="form-group hidden" id="guest-duration-group">
                             <label for="guest-duration" class="form-label">Guest Duration (days)</label>
                             <input type="number" id="guest-duration" name="guest_duration_days" min="1" max="365"
                                    class="form-input"
@@ -239,11 +297,11 @@
                                 </div>
                                 <div class="ml-3">
                                     <span class="text-sm font-medium text-gray-900">Manager</span>
-                                    <p class="text-xs text-gray-600">Can manage employees and create invitations</p>
+                                    <p class="text-xs text-gray-600" id="manager-description">Can manage employees and create invitations</p>
                                 </div>
                             </div>
                             
-                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200" id="admin-role-info" style="display: none;">
+                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hidden" id="admin-role-info">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                                         <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +315,7 @@
                                 </div>
                             </div>
                             
-                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200" id="guest-role-info" style="display: none;">
+                            <div class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hidden" id="guest-role-info">
                                 <div class="flex-shrink-0">
                                     <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                                         <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,10 +350,10 @@
 </div>
 
 <!-- Edit User Modal -->
-<div id="edit-user-modal" class="modal">
+<div id="edit-user-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-content-md">
-        <div class="mt-3">
+        <div class="p-6">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-xl font-bold text-gray-900">Edit User</h3>
                 <button id="close-edit-modal" class="btn-close">
@@ -320,17 +378,16 @@
                 
                 <div class="form-group">
                     <label for="edit-role" class="form-label">Role</label>
-                    <select id="edit-role" name="role" required class="form-input form-select">
-                        <option value="">Select a role</option>
-                        <option value="employee">Employee</option>
+                                                <select id="edit-role" name="role" required class="form-select">
+                        <option value="admin" id="edit-admin-option" class="hidden">Admin</option>
                         <option value="manager">Manager</option>
-                        <option value="admin" id="edit-admin-option" style="display: none;">Admin</option>
+                        <option value="employee">Employee</option>
                         <option value="guest">Guest</option>
                     </select>
                 </div>
                 
                 <!-- Guest Expiration Field (only shown for guest role) -->
-                <div class="form-group" id="edit-guest-expiration-group" style="display: none;">
+                <div class="form-group hidden" id="edit-guest-expiration-group">
                     <label for="edit-guest-expiration" class="form-label">Expiration Date</label>
                     <input type="datetime-local" id="edit-guest-expiration" name="expires_at"
                            class="form-input">
@@ -351,7 +408,7 @@
 </div>
 
 <!-- Invitation Details Modal -->
-<div id="invitation-details-modal" class="modal">
+<div id="invitation-details-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-content-lg">
         <div class="p-6">
@@ -383,10 +440,10 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-confirmation-modal" class="modal">
+<div id="delete-confirmation-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content">
-        <div class="mt-3">
+        <div class="p-6">
             <div class="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mx-auto mb-4">
                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
@@ -407,10 +464,10 @@
 </div>
 
 <!-- Invitation Confirmation Modal -->
-<div id="invitation-confirmation-modal" class="modal">
+<div id="invitation-confirmation-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content">
-        <div class="mt-3">
+        <div class="p-6">
             <div class="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mx-auto mb-4">
                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>

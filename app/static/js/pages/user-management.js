@@ -15,12 +15,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let invitations = [];
     let userToDelete = null;
     let invitationToDelete = null;
+    let currentUser = null; // Store current user information
 
     // Initialize
     loadUsers();
     loadInvitations();
+    loadCurrentUser(); // Load current user information
     bindEvents();
-    setupRoleVisibility();
 
     function bindEvents() {
         // Invite user modal events
@@ -62,19 +63,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Role selection change
         document.getElementById('invite-role')?.addEventListener('change', handleRoleChange);
+        
+        // Invitation type change
+        document.querySelectorAll('input[name="invitation_type"]').forEach(radio => {
+            radio.addEventListener('change', handleInvitationTypeChange);
+        });
+        
+
     }
 
     async function loadUsers() {
+        console.log('🔍 loadUsers() called');
         try {
+            console.log('📡 Making API call to /api/users...');
             const data = await ApiUtils.fetchWithErrorHandling('/api/users');
-            users = data.users;
+            console.log('✅ API response received:', data);
+            users = data.users || data; // Handle both formats
+            console.log('👥 Users loaded:', users);
             renderUsers();
             hideLoadingState();
             
             if (users.length === 0) {
+                console.log('⚠️ No users found, showing empty state');
                 showEmptyState();
             }
         } catch (error) {
+            console.error('❌ Error loading users:', error);
             ApiUtils.showError('Failed to load users');
             hideLoadingState();
         }
@@ -89,38 +103,37 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        usersContainer.innerHTML = users.map(user => `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 flex items-center justify-center">
-                            <span class="text-sm font-semibold text-white">${user.name.charAt(0).toUpperCase()}</span>
-                        </div>
-                        <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">${user.name}</div>
-                            <div class="text-sm text-gray-500">${user.email}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.role === 'owner' ? 'bg-purple-100 text-purple-800' :
-                        user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                    }">
-                        ${user.role}
-                    </span>
-                </td>
-                <td class="px-6 py-4 text-right">
-                    <button onclick="window.editUser(${user.id})" class="text-primary-600 hover:text-primary-900 mr-3">
-                        Edit
-                    </button>
-                    <button onclick="window.deleteUser(${user.id})" class="text-red-600 hover:text-red-900">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+                       usersContainer.innerHTML = users.map(user => `
+                   <tr class="user-table-row">
+                       <td class="user-table-cell">
+                           <div class="user-info">
+                               <div class="user-name">${user.name}</div>
+                               <div class="user-email">${user.email}</div>
+                           </div>
+                       </td>
+                       <td class="user-table-cell">
+                           <span class="role-badge role-badge-${user.role}">
+                               ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                           </span>
+                       </td>
+                       <td class="user-table-cell">
+                           <div class="action-buttons action-buttons-right">
+                               <button onclick="window.editUser(${user.id})" class="btn btn-warning btn-sm" title="Edit">
+                                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                   </svg>
+                                   Edit
+                               </button>
+                               <button onclick="window.deleteUser(${user.id})" class="btn btn-danger btn-sm" title="Delete">
+                                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                   </svg>
+                                   Delete
+                               </button>
+                           </div>
+                       </td>
+                   </tr>
+               `).join('');
     }
 
     function showInviteModal() {
@@ -128,8 +141,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('invite-modal');
         console.log('Modal element:', modal);
         if (modal) {
-            modal.style.display = 'flex';
-            console.log('Set display to flex');
+            modal.classList.remove('hidden');
+            modal.classList.add('show');
+            console.log('Set display to show');
+            // Set up role visibility when modal is shown
+            setupRoleVisibility();
         } else {
             console.error('Modal element not found');
         }
@@ -138,7 +154,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideInviteModal() {
         const modal = document.getElementById('invite-modal');
         if (modal) {
-            modal.style.display = 'none';
+            modal.classList.remove('show');
+            modal.classList.add('hidden');
+        }
+        
+        // Reset form fields
+        const form = document.getElementById('invite-form');
+        if (form) {
+            form.reset();
+        }
+        
+
+        
+        // Reset invitation type to internal
+        const internalInvite = document.getElementById('internal-invite');
+        if (internalInvite) {
+            internalInvite.checked = true;
+            handleInvitationTypeChange();
         }
     }
 
@@ -148,14 +180,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('invite-form');
         const formData = new FormData(form);
         
+        const invitationType = formData.get('invitation_type');
+        
         const data = {
             name: formData.get('name'),
             email: formData.get('email'),
-            role: formData.get('role')
+            role: formData.get('role'),
+            invitation_type: invitationType
         };
         
-        if (!ApiUtils.validateRequiredFields(data, ['name', 'email', 'role'])) {
+        if (!ApiUtils.validateRequiredFields(data, ['name', 'email', 'role', 'invitation_type'])) {
             return;
+        }
+        
+        // Add guest duration if it's a guest role
+        if (data.role === 'guest') {
+            const guestDuration = formData.get('guest_duration_days');
+            if (guestDuration) {
+                data.guest_duration_days = parseInt(guestDuration);
+            }
         }
         
         try {
@@ -172,8 +215,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 hideInviteModal();
                 form.reset();
+                // Reset invitation type to internal
+                document.getElementById('internal-invite').checked = true;
+                handleInvitationTypeChange();
                 loadInvitations();
-                ApiUtils.showSuccess('Invitation created successfully!');
+                
+                const successMessage = invitationType === 'external' 
+                    ? 'External company invitation created successfully!' 
+                    : 'Invitation created successfully!';
+                ApiUtils.showSuccess(successMessage);
             } else {
                 ApiUtils.showError('Failed to create invitation: ' + result.error);
             }
@@ -261,9 +311,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const table = document.getElementById('invitations-table');
 
         try {
-            loading.style.display = 'flex';
-            table.style.display = 'none';
-            empty.style.display = 'none';
+            loading.classList.remove('hidden');
+            loading.classList.add('flex');
+            table.classList.add('hidden');
+            empty.classList.add('hidden');
 
             const response = await fetch('/api/invitations');
             const data = await response.json();
@@ -277,7 +328,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             ApiUtils.showError('Failed to load invitations: ' + error.message);
         } finally {
-            loading.style.display = 'none';
+            loading.classList.add('hidden');
+            loading.classList.remove('flex');
         }
     }
 
@@ -287,61 +339,61 @@ document.addEventListener('DOMContentLoaded', function() {
         const table = document.getElementById('invitations-table');
 
         if (invitations.length === 0) {
-            table.style.display = 'none';
-            empty.style.display = 'flex';
+            table.classList.add('hidden');
+            empty.classList.remove('hidden');
+            empty.classList.add('flex');
             return;
         }
 
-        table.style.display = 'table';
-        empty.style.display = 'none';
+                    table.classList.remove('hidden');
+            empty.classList.add('hidden');
+            empty.classList.remove('flex');
 
         tbody.innerHTML = invitations.map(invitation => `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4">
-                    <div class="flex items-center space-x-2">
-                        <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">${invitation.code}</code>
-                        <button class="text-gray-400 hover:text-gray-600" onclick="copyToClipboard('${invitation.code}')" title="Copy code">
+            <tr class="user-table-row">
+                <td class="user-table-cell">
+                    <div class="flex items-center space-x-3">
+                        <code class="invitation-code">${invitation.code}</code>
+                        <button class="copy-button" onclick="copyToClipboard('${invitation.code}')" title="Copy invitation code">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
                         </button>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900">${invitation.name}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">${invitation.email}</td>
-                <td class="px-6 py-4">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        invitation.role === 'owner' ? 'bg-purple-100 text-purple-800' :
-                        invitation.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                    }">
-                        ${invitation.role}
+                <td class="user-table-cell user-name">${invitation.name}</td>
+                <td class="user-table-cell user-email">${invitation.email}</td>
+                <td class="user-table-cell">
+                    <span class="role-badge role-badge-${invitation.role}">
+                        ${invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
                     </span>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900">${invitation.invited_by}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">${formatDate(invitation.expires_at)}</td>
-                <td class="px-6 py-4">
+                <td class="user-table-cell user-name">${invitation.invited_by}</td>
+                <td class="user-table-cell user-email">${formatDate(invitation.expires_at)}</td>
+                <td class="user-table-cell">
                     ${invitation.is_used ? 
-                        '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Used</span>' : 
+                        '<span class="status-badge status-badge-used">Used</span>' : 
                         invitation.is_expired ? 
-                            '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Expired</span>' : 
-                            '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Active</span>'
+                            '<span class="status-badge status-badge-expired">Expired</span>' : 
+                            '<span class="status-badge status-badge-active">Active</span>'
                     }
                 </td>
-                <td class="px-6 py-4 text-right">
-                    <button onclick="viewInvitation('${invitation.code}')" class="text-blue-600 hover:text-blue-900 mr-3" title="View details">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                    </button>
-                    ${!invitation.is_used && !invitation.is_expired ? `
-                        <button onclick="deleteInvitation(${invitation.id})" class="text-red-600 hover:text-red-900" title="Delete invitation">
+                <td class="user-table-cell">
+                    <div class="action-buttons action-buttons-right">
+                        <button onclick="viewInvitation('${invitation.code}')" class="action-btn action-btn-view" title="View invitation details">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
                         </button>
-                    ` : ''}
+                        ${!invitation.is_used && !invitation.is_expired ? `
+                            <button onclick="deleteInvitation(${invitation.id})" class="action-btn action-btn-delete" title="Delete invitation">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -366,64 +418,59 @@ document.addEventListener('DOMContentLoaded', function() {
         const content = document.getElementById('invitation-details-content');
         content.innerHTML = `
             <div class="space-y-6">
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Invitation Code</h4>
-                    <div class="flex items-center space-x-2">
-                        <code class="bg-white px-3 py-2 rounded border text-sm font-mono flex-1">${code}</code>
-                        <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('${code}')">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="invitation-details-section">
+                    <h4 class="invitation-details-title">Invitation Code</h4>
+                    <div class="flex items-center space-x-3">
+                        <code class="invitation-code-display">${code}</code>
+                        <button class="copy-button" onclick="copyToClipboard('${code}')" title="Copy invitation code">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
-                            Copy
                         </button>
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">User Information</h4>
+                    <div class="invitation-details-section">
+                        <h4 class="invitation-details-title">User Information</h4>
                         <div class="space-y-3">
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Name:</label>
-                                <p class="text-gray-900">${invitation.name}</p>
+                                <label class="invitation-details-label">Name:</label>
+                                <p class="invitation-details-value">${invitation.name}</p>
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Email:</label>
-                                <p class="text-gray-900">${invitation.email}</p>
+                                <label class="invitation-details-label">Email:</label>
+                                <p class="invitation-details-value">${invitation.email}</p>
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Role:</label>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    invitation.role === 'owner' ? 'bg-purple-100 text-purple-800' :
-                                    invitation.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-gray-100 text-gray-800'
-                                }">
-                                    ${invitation.role}
+                                <label class="invitation-details-label">Role:</label>
+                                <span class="role-badge role-badge-${invitation.role}">
+                                    ${invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
                                 </span>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Invitation Details</h4>
+                    <div class="invitation-details-section">
+                        <h4 class="invitation-details-title">Invitation Details</h4>
                         <div class="space-y-3">
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Company:</label>
-                                <p class="text-gray-900">${invitation.company_name}</p>
+                                <label class="invitation-details-label">Company:</label>
+                                <p class="invitation-details-value">${invitation.company_name}</p>
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700">Expires:</label>
-                                <p class="text-gray-900">${formatDate(invitation.expires_at)}</p>
+                                <label class="invitation-details-label">Expires:</label>
+                                <p class="invitation-details-value">${formatDate(invitation.expires_at)}</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-blue-50 rounded-lg p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Invitation Link</h4>
+                <div class="invitation-details-section bg-blue-50">
+                    <h4 class="invitation-details-title">Invitation Link</h4>
                     <div class="flex items-center space-x-2">
                         <input type="text" value="${window.location.origin}/register?code=${code}" readonly 
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+                               class="invitation-link-input">
                         <button class="btn btn-secondary btn-sm" onclick="copyToClipboard('${window.location.origin}/register?code=${code}')">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -497,28 +544,106 @@ document.addEventListener('DOMContentLoaded', function() {
     async function copyToClipboard(text) {
         try {
             await navigator.clipboard.writeText(text);
-            ApiUtils.showSuccess('Copied to clipboard!');
+            
+            // Find the button that was clicked and provide visual feedback
+            const buttons = document.querySelectorAll('.copy-button');
+            buttons.forEach(button => {
+                if (button.getAttribute('onclick')?.includes(text)) {
+                    const originalHTML = button.innerHTML;
+                    button.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    `;
+                    button.style.background = 'linear-gradient(135deg, var(--green-50) 0%, var(--green-100) 100%)';
+                    button.style.borderColor = 'var(--green-200)';
+                    button.style.color = 'var(--green-600)';
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.style.background = '';
+                        button.style.borderColor = '';
+                        button.style.color = '';
+                    }, 1500);
+                }
+            });
+            
+            ApiUtils.showSuccess('Invitation code copied to clipboard!');
         } catch (error) {
             ApiUtils.showError('Failed to copy to clipboard');
         }
     }
 
+    async function loadCurrentUser() {
+        try {
+            const response = await fetch('/api/current-user');
+            const data = await response.json();
+            if (data.success) {
+                currentUser = data.user;
+                setupRoleVisibility();
+            } else {
+                ApiUtils.showError('Failed to load current user: ' + data.error);
+            }
+        } catch (error) {
+            ApiUtils.showError('Failed to load current user: ' + error.message);
+        }
+    }
+
     function setupRoleVisibility() {
-        // Show/hide owner option based on current user role
-        // This will be implemented when we have user role information
+        if (!currentUser) {
+            console.warn('Current user not loaded, cannot set role visibility.');
+            return;
+        }
+
+        const inviteAdminOption = document.getElementById('invite-admin-option');
+        const adminRoleInfo = document.getElementById('admin-role-info');
+
+        // Show/hide admin option based on current user's role
+        if (currentUser.is_admin) {
+            // Admin users can see and assign admin role
+            inviteAdminOption.classList.remove('hidden');
+        } else {
+            // Manager users cannot see admin role option
+            inviteAdminOption.classList.add('hidden');
+            // If admin was selected, reset to empty
+            const inviteRoleSelect = document.getElementById('invite-role');
+            if (inviteRoleSelect.value === 'admin') {
+                inviteRoleSelect.value = '';
+            }
+        }
     }
 
     function handleRoleChange() {
-        const roleSelect = document.getElementById('invite-role');
-        const ownerOption = document.getElementById('invite-owner-option');
-        const ownerInfo = document.getElementById('owner-role-info');
+        const role = document.getElementById('invite-role').value;
+        const guestDurationGroup = document.getElementById('guest-duration-group');
+        const guestRoleInfo = document.getElementById('guest-role-info');
+        const adminRoleInfo = document.getElementById('admin-role-info');
+        const adminOption = document.getElementById('invite-admin-option');
         
-        if (roleSelect.value === 'owner') {
-            ownerInfo.style.display = 'flex';
+        // Show/hide guest duration field
+                    guestDurationGroup.classList.toggle('hidden', role !== 'guest');
+            guestRoleInfo.classList.toggle('hidden', role !== 'guest');
+        
+        // Show/hide admin role info
+                    adminRoleInfo.classList.toggle('hidden', role !== 'admin');
+            adminOption.classList.toggle('hidden', role !== 'admin');
+    }
+    
+    function handleInvitationTypeChange() {
+        const invitationType = document.querySelector('input[name="invitation_type"]:checked').value;
+        const externalCompanyInfo = document.getElementById('external-company-info');
+        const managerDescription = document.getElementById('manager-description');
+        
+        if (invitationType === 'external') {
+            externalCompanyInfo.classList.remove('hidden');
+            managerDescription.textContent = 'Can invite their own employees to access your calendar';
         } else {
-            ownerInfo.style.display = 'none';
+            externalCompanyInfo.classList.add('hidden');
+            managerDescription.textContent = 'Can manage employees and create invitations';
         }
     }
+    
+
 
     // Global functions for onclick handlers
     window.editUser = function(userId) {

@@ -85,9 +85,7 @@
 
                     <!-- Submit Button -->
                     <div>
-                        <button type="submit" 
-                                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-                                style="background: linear-gradient(to right, #3b82f6, #2563eb) !important; border-color: #3b82f6 !important;">
+                        <button type="submit" class="btn btn-primary btn-full">
                             Sign in to your account
                         </button>
                     </div>
@@ -131,7 +129,14 @@ document.getElementById('login-form').addEventListener('submit', async function(
         if (data.success) {
             window.location.href = '/';
         } else {
-            alert(data.error || 'Login failed');
+            if (data.redirect_to_register) {
+                // Redirect to registration with invitation code
+                const registerUrl = new URL('/auth/register', window.location.origin);
+                registerUrl.searchParams.set('invitation_code', data.invitation_code);
+                window.location.href = registerUrl.toString();
+            } else {
+                alert(data.error || 'Login failed');
+            }
         }
     } catch (error) {
         console.error('Error:', error);

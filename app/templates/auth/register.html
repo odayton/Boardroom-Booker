@@ -14,7 +14,7 @@
     <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
     
     <div class="relative min-h-screen flex items-start justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full" style="margin-top: 15vh;">
+        <div class="max-w-md w-full mt-16">
             <!-- Logo/Brand Section -->
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-gradient mb-2">Boardroom Booker</h1>
@@ -34,7 +34,7 @@
                  
                  <form class="space-y-6" id="register-form">
                     <!-- Invitation Code Section -->
-                    <div id="invitation-section" class="space-y-4" style="display: none;">
+                    <div id="invitation-section" class="space-y-4 hidden">
                         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                             <div>
                                 <h3 class="text-sm font-medium text-blue-800">You have an invitation</h3>
@@ -76,30 +76,30 @@
                             </div>
                         </div>
                 
-                        <!-- Company Creation Fields (hidden when using invitation) -->
-                        <div id="company-fields">
-                            <!-- Company Name Field -->
-                            <div>
-                                <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                                <div class="relative">
-                                    <input id="company_name" name="company_name" type="text" 
-                                           class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
-                                           placeholder="Enter your company name">
-                                </div>
-                            </div>
-                            
-                            <!-- Company Domain Field -->
-                            <div>
-                                <label for="company_domain" class="block text-sm font-medium text-gray-700 mb-2">Company Domain</label>
-                                <div class="relative">
-                                    <input id="company_domain" name="company_domain" type="text" 
-                                           class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
-                                           placeholder="company.com">
-                                </div>
-                                <p class="mt-2 text-xs text-gray-500">Your email domain must match this company domain</p>
-                            </div>
-                            
-                                                         <!-- No Company Option -->
+                                                 <!-- Company Creation Fields (hidden when using invitation) -->
+                         <div id="company-fields" class="space-y-6">
+                             <!-- Company Name Field -->
+                             <div>
+                                 <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                                 <div class="relative">
+                                     <input id="company_name" name="company_name" type="text" 
+                                            class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                            placeholder="Enter your company name">
+                                 </div>
+                             </div>
+                             
+                             <!-- Company Domain Field -->
+                             <div>
+                                 <label for="company_domain" class="block text-sm font-medium text-gray-700 mb-2">Company Domain</label>
+                                 <div class="relative">
+                                     <input id="company_domain" name="company_domain" type="text" 
+                                            class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200 hover:border-gray-400" 
+                                            placeholder="@company.com" required>
+                                 </div>
+                                 <p class="mt-2 text-xs text-gray-500">Must include @ symbol and match your email domain (e.g., if email is user@company.com, domain should be @company.com).</p>
+                             </div>
+                             
+                             <!-- No Company Option -->
                              <div class="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
                                  <input id="no_company" name="no_company" type="checkbox" 
                                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -107,14 +107,12 @@
                                      No company available?
                                  </label>
                              </div>
-                        </div>
+                         </div>
                     </div>
 
                     <!-- Submit Button -->
                     <div>
-                        <button type="submit" 
-                                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-                                style="background: linear-gradient(to right, #3b82f6, #2563eb) !important; border-color: #3b82f6 !important;">
+                        <button type="submit" class="btn btn-primary btn-full">
                             Create your account
                         </button>
                     </div>
@@ -142,7 +140,7 @@ let invitationData = null;
 // Check for invitation code in URL
 function checkForInvitationCode() {
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    const code = urlParams.get('code') || urlParams.get('invitation_code');
     
     if (code) {
         invitationCode = code;
@@ -278,39 +276,77 @@ function toggleCompanyFields() {
 }
 
 // Domain validation (only for new company creation)
-document.getElementById('company_domain').addEventListener('blur', async function() {
+function validateDomainMatch() {
     if (invitationCode) return; // Skip validation for invitations
     
-    const domain = this.value.trim();
-    const email = document.getElementById('email').value.trim();
-    
-    if (domain && email) {
-        const emailDomain = email.split('@')[1];
-        if (emailDomain && emailDomain !== domain) {
-            this.setCustomValidity('Email domain must match company domain');
-            this.reportValidity();
-        } else {
-            this.setCustomValidity('');
-        }
-    }
-});
-
-document.getElementById('email').addEventListener('blur', async function() {
-    if (invitationCode) return; // Skip validation for invitations
-    
-    const email = this.value.trim();
     const domain = document.getElementById('company_domain').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const domainField = document.getElementById('company_domain');
+    const emailField = document.getElementById('email');
     
-    if (domain && email) {
-        const emailDomain = email.split('@')[1];
-        if (emailDomain && emailDomain !== domain) {
-            this.setCustomValidity('Email domain must match company domain');
-            this.reportValidity();
-        } else {
-            this.setCustomValidity('');
-        }
+    // Clear previous validation errors
+    domainField.setCustomValidity('');
+    emailField.setCustomValidity('');
+    
+    // If no domain is entered, no validation needed
+    if (!domain) {
+        return;
     }
-});
+    
+    // Check if domain includes @ symbol
+    if (!domain.includes('@')) {
+        domainField.setCustomValidity('Domain must include @ symbol (e.g., @company.com)');
+        domainField.reportValidity();
+        return;
+    }
+    
+    // If no email is entered, only validate domain format
+    if (!email) {
+        return;
+    }
+    
+    // Check if email has @ symbol
+    if (!email.includes('@')) {
+        emailField.setCustomValidity('Email must include @ symbol');
+        emailField.reportValidity();
+        return;
+    }
+    
+    // Extract everything after and including @ from both fields
+    const emailAfterAt = email.substring(email.indexOf('@'));
+    const domainAfterAt = domain.substring(domain.indexOf('@'));
+    
+    // Debug logging
+    console.log('Email:', email);
+    console.log('Domain:', domain);
+    console.log('Email after @:', emailAfterAt);
+    console.log('Domain after @:', domainAfterAt);
+    console.log('Comparison result:', emailAfterAt === domainAfterAt);
+    
+    // Check if email has content after @
+    if (!emailAfterAt || emailAfterAt === '@') {
+        emailField.setCustomValidity('Invalid email format');
+        emailField.reportValidity();
+        return;
+    }
+    
+    // Compare the @ and everything after it
+    if (emailAfterAt !== domainAfterAt) {
+        console.log('Validation failed: domains do not match');
+        domainField.setCustomValidity('Email domain must match company domain (including @ symbol)');
+        emailField.setCustomValidity('Email domain must match company domain (including @ symbol)');
+        domainField.reportValidity();
+        emailField.reportValidity();
+    } else {
+        console.log('Validation passed: domains match');
+    }
+}
+
+// Domain field validation
+document.getElementById('company_domain').addEventListener('blur', validateDomainMatch);
+
+// Email field validation
+document.getElementById('email').addEventListener('blur', validateDomainMatch);
 
 // Show error message
 function showError(message) {

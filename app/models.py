@@ -15,7 +15,8 @@ class Company(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    users = db.relationship('User', backref='company', lazy=True)
+    users = db.relationship('User', foreign_keys='User.company_id', backref='company', lazy=True)
+    external_users = db.relationship('User', foreign_keys='User.external_company_access', backref='external_company', lazy=True)
     rooms = db.relationship('Room', backref='company', lazy=True)
     bookings = db.relationship('Booking', backref='company', lazy=True)
     invitations = db.relationship('Invitation', backref='company', lazy=True)
@@ -33,6 +34,7 @@ class Invitation(db.Model):
     invited_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
     guest_duration_days = db.Column(db.Integer, nullable=True)  # For guest accounts
+    invitation_metadata = db.Column(db.Text, nullable=True)  # JSON string for additional data
     is_used = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -92,6 +94,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     role = db.Column(db.String(20), default='employee')  # 'admin', 'manager', 'employee', 'guest'
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
+    external_company_access = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)  # For cross-company access
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=True)  # For guest accounts
     
@@ -138,24 +141,53 @@ class User(UserMixin, db.Model):
         """Check if user can manage company settings"""
         return self.role == 'admin'
     
+    def is_owner(self):
+        """Check if user is an owner (admin)"""
+        return self.role == 'admin'
+    
+    def get_accessible_company_id(self):
+        """Get the company ID this user has access to (own or external)"""
+        return self.company_id or self.external_company_access
+    
+    def is_external_user(self):
+        """Check if this user is accessing another company's data"""
+        return self.external_company_access is not None
+    
+    def can_access_company(self, company_id):
+        """Check if user can access a specific company's data"""
+        accessible_company = self.get_accessible_company_id()
+        return accessible_company == company_id
+    
     def can_see_user(self, other_user):
         """Check if user can see another user's information"""
+        # Users can always see themselves
+        if self.id == other_user.id:
+            return True
+            
+        # Get the company this user has access to (either their own or external)
+        user_company_id = self.company_id or self.external_company_access
+        
         if self.role == 'admin':
-            return other_user.company_id == self.company_id
+            # Admins can see users from their own company only
+            return other_user.company_id == user_company_id
         elif self.role == 'manager':
-            # Managers can see employees and guests, but not other managers or admins
-            return (other_user.company_id == self.company_id and 
+            # Managers can see employees and guests from their company only
+            return (other_user.company_id == user_company_id and 
                    other_user.role in ['employee', 'guest'])
         else:
             return False
     
     def can_edit_user(self, other_user):
         """Check if user can edit another user"""
+        # Get the company this user has access to (either their own or external)
+        user_company_id = self.company_id or self.external_company_access
+        
         if self.role == 'admin':
-            return other_user.company_id == self.company_id
+            # Admins can edit users from their own company only
+            return other_user.company_id == user_company_id
         elif self.role == 'manager':
-            # Managers can only edit employees and guests
-            return (other_user.company_id == self.company_id and 
+            # Managers can only edit employees and guests from their company
+            return (other_user.company_id == user_company_id and 
                    other_user.role in ['employee', 'guest'])
         else:
             return False
@@ -196,6 +228,8 @@ class Room(db.Model):
     operating_hours_start = db.Column(db.Time, nullable=True)
     operating_hours_end = db.Column(db.Time, nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    visibility_type = db.Column(db.String(20), default='company')  # company, specific_companies, public
+    visible_companies = db.Column(db.Text, nullable=True)  # JSON string of company IDs
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -215,17 +249,55 @@ class Room(db.Model):
         """Set equipment from a list"""
         self.equipment = json.dumps(equipment_list) if equipment_list else None
     
+    def get_visible_companies_list(self):
+        """Get visible companies as a list of IDs"""
+        if self.visible_companies:
+            try:
+                return json.loads(self.visible_companies)
+            except:
+                return []
+        return []
+    
+    def set_visible_companies_list(self, company_ids):
+        """Set visible companies from a list of IDs"""
+        self.visible_companies = json.dumps(company_ids) if company_ids else None
+    
+    def is_visible_to_company(self, company_id):
+        """Check if room is visible to a specific company"""
+        if self.visibility_type == 'public':
+            return True
+        elif self.visibility_type == 'company':
+            return self.company_id == company_id
+        elif self.visibility_type == 'specific_companies':
+            return company_id in self.get_visible_companies_list()
+        return False
+    
+    def get_visibility_display(self):
+        """Get human-readable visibility type"""
+        visibility_map = {
+            'company': 'My Company Only',
+            'specific_companies': 'Specific Companies',
+            'public': 'Public (All Companies)'
+        }
+        return visibility_map.get(self.visibility_type, self.visibility_type)
+    
     def is_available_for_booking(self, user):
         """Check if room is available for booking by this user"""
         if self.status != 'available':
             return False
         
-        if self.access_level == 'owners_only' and not user.is_owner():
-            return False
-        elif self.access_level == 'managers_only' and not user.is_admin():
-            return False
+        # Role hierarchy: admin > manager > employee > guest
+        role_hierarchy = {
+            'admin': 4,
+            'manager': 3,
+            'employee': 2,
+            'guest': 1
+        }
         
-        return True
+        user_role_level = role_hierarchy.get(user.role, 0)
+        required_role_level = role_hierarchy.get(self.access_level, 0)
+        
+        return user_role_level >= required_role_level
     
     def get_room_type_display(self):
         """Get human-readable room type"""
@@ -259,11 +331,45 @@ class Booking(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     organizer_name = db.Column(db.String(120), nullable=True)
-    is_public = db.Column(db.Boolean, default=True)
+    is_public = db.Column(db.Boolean, default=True)  # Legacy field for backward compatibility
+    visibility_type = db.Column(db.String(20), default='all_companies')  # all_companies, owner_company, select_companies
+    visible_companies = db.Column(db.Text, nullable=True)  # JSON string of company IDs for select_companies
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def get_visible_companies_list(self):
+        """Get visible companies as a list of IDs"""
+        if self.visible_companies:
+            try:
+                return json.loads(self.visible_companies)
+            except:
+                return []
+        return []
+    
+    def set_visible_companies_list(self, company_ids):
+        """Set visible companies from a list of IDs"""
+        self.visible_companies = json.dumps(company_ids) if company_ids else None
+    
+    def is_visible_to_company(self, company_id):
+        """Check if booking is visible to a specific company"""
+        if self.visibility_type == 'all_companies':
+            return True
+        elif self.visibility_type == 'owner_company':
+            return self.company_id == company_id
+        elif self.visibility_type == 'select_companies':
+            return company_id in self.get_visible_companies_list()
+        return False
+    
+    def get_visibility_display(self):
+        """Get human-readable visibility type"""
+        visibility_map = {
+            'all_companies': 'Public (All Companies)',
+            'owner_company': 'Private (Your Company Only)',
+            'select_companies': 'Select Companies'
+        }
+        return visibility_map.get(self.visibility_type, self.visibility_type)
     
     def __repr__(self):
         return f'<Booking {self.title}>'

@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gradient mb-2">Company Management</h1>
+                    <p class="text-gray-600">Manage companies and view statistics</p>
+                </div>
+                <div class="page-actions">
+                    <button id="create-company-btn" class="btn btn-primary btn-lg hover-lift">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Create Company
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies Overview -->
+    <div class="card hover-lift">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title">All Companies</h3>
+                <button id="refresh-companies-btn" class="btn btn-secondary btn-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <!-- Companies List -->
+            <div class="overflow-hidden">
+                <div id="companies-list" class="divide-y divide-gray-200">
+                    <!-- Companies will be loaded here -->
+                </div>
+                <div id="companies-loading" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading companies...</p>
+                </div>
+                <div id="companies-empty" class="text-center py-8 hidden">
+                    <div class="max-w-md mx-auto">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-4">
+                            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No companies found</h3>
+                        <p class="text-gray-600">Create your first company using the button above</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+</div>
+
+<!-- Create Company Modal -->
+<div id="create-company-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Create New Company</h3>
+            <button class="modal-close" onclick="closeModal('create-company-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="create-company-form" class="space-y-6">
+                <div>
+                    <label for="new-company-name" class="form-label">Company Name</label>
+                    <input type="text" id="new-company-name" name="name" class="form-input" required>
+                </div>
+                <div>
+                    <label for="new-company-domain" class="form-label">Domain</label>
+                    <input type="text" id="new-company-domain" name="domain" class="form-input" required placeholder="@company.com">
+                    <p class="text-sm text-gray-500 mt-1">Must include @ symbol (e.g., @company.com)</p>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('create-company-modal')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="createCompany()">Create Company</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Company Modal -->
+<div id="edit-company-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Company</h3>
+            <button class="modal-close" onclick="closeModal('edit-company-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="edit-company-form" class="space-y-6">
+                <input type="hidden" id="edit-company-id">
+                <div>
+                    <label for="edit-company-name" class="form-label">Company Name</label>
+                    <input type="text" id="edit-company-name" name="name" class="form-input" required>
+                </div>
+                <div>
+                    <label for="edit-company-domain" class="form-label">Domain</label>
+                    <input type="text" id="edit-company-domain" name="domain" class="form-input" required placeholder="@company.com">
+                    <p class="text-sm text-gray-500 mt-1">Must include @ symbol (e.g., @company.com)</p>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('edit-company-modal')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="updateCompany()">Update Company</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Company Modal -->
+<div id="delete-company-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Delete Company</h3>
+            <button class="modal-close" onclick="closeModal('delete-company-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="space-y-4">
+                <div>
+                    <p>Are you sure you want to delete <strong id="delete-company-name"></strong>?</p>
+                    <p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+                </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-red-800">Warning</h4>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p>This will permanently delete:</p>
+                                <ul class="list-disc list-inside mt-1 space-y-1">
+                                    <li>All users associated with this company</li>
+                                    <li>All rooms and their configurations</li>
+                                    <li>All bookings and their data</li>
+                                    <li>All invitations and pending requests</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-yellow-800">Note</h4>
+                            <p class="mt-1 text-sm text-yellow-700">
+                                This action will cascade delete all related data. Make sure you have backups if needed.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="delete-company-id">
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('delete-company-modal')">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="deleteCompany()">Delete Company & All Data</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load companies overview
+    loadCompaniesOverview();
+
+
+
+    // Handle create company button
+    document.getElementById('create-company-btn').addEventListener('click', function() {
+        openModal('create-company-modal');
+    });
+
+    // Handle refresh companies button
+    document.getElementById('refresh-companies-btn').addEventListener('click', function() {
+        loadCompaniesOverview();
+    });
+});
+
+
+
+
+
+function loadCompaniesOverview() {
+    const companiesList = document.getElementById('companies-list');
+    const companiesLoading = document.getElementById('companies-loading');
+    const companiesEmpty = document.getElementById('companies-empty');
+
+    companiesLoading.style.display = 'block';
+    companiesList.style.display = 'none';
+    companiesEmpty.style.display = 'none';
+
+    fetch('/api/companies/overview')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateCompaniesList(data.companies);
+            } else {
+                showNotification('Error loading companies overview', 'error');
+                companiesLoading.style.display = 'none';
+                companiesEmpty.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading companies overview', 'error');
+            companiesLoading.style.display = 'none';
+            companiesEmpty.style.display = 'block';
+        });
+}
+
+function updateCompaniesList(companies) {
+    const companiesList = document.getElementById('companies-list');
+    const companiesLoading = document.getElementById('companies-loading');
+    const companiesEmpty = document.getElementById('companies-empty');
+
+    if (companies.length === 0) {
+        companiesLoading.style.display = 'none';
+        companiesList.style.display = 'none';
+        companiesEmpty.style.display = 'block';
+        return;
+    }
+
+    companiesLoading.style.display = 'none';
+    companiesList.style.display = 'block';
+    companiesEmpty.style.display = 'none';
+
+    companiesList.innerHTML = companies.map(company => `
+        <div class="p-6 hover:bg-gray-50 border-l-4 ${company.is_own_company ? 'border-primary-500 bg-primary-50' : 'border-gray-200'}" data-company-id="${company.id}">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <h4 class="text-lg font-semibold text-gray-900">${escapeHtml(company.name)}</h4>
+                        ${company.is_own_company ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">Your Company</span>' : ''}
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">Domain: ${escapeHtml(company.domain)}</p>
+                    
+                    ${company.is_own_company ? `
+                        <!-- Statistics Grid -->
+                        <div class="flex gap-3 mb-4">
+                            <div class="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 cursor-pointer hover:from-blue-100 hover:to-blue-200 transition-all duration-200" onclick="window.location.href='/user-management'">
+                                <div class="text-lg font-bold text-blue-600 mb-1 text-center">${company.user_count || 0}</div>
+                                <div class="text-xs text-blue-700 font-medium text-center">Total Users</div>
+                            </div>
+                            <div class="flex-1 bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200 cursor-pointer hover:from-green-100 hover:to-green-200 transition-all duration-200" onclick="window.location.href='/room-management'">
+                                <div class="text-lg font-bold text-green-600 mb-1 text-center">${company.room_count || 0}</div>
+                                <div class="text-xs text-green-700 font-medium text-center">Total Rooms</div>
+                            </div>
+                            <div class="flex-1 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
+                                <div class="text-lg font-bold text-purple-600 mb-1 text-center">${company.booking_count || 0}</div>
+                                <div class="text-xs text-purple-700 font-medium text-center">Total Bookings</div>
+                            </div>
+                            <div class="flex-1 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3 border border-orange-200">
+                                <div class="text-lg font-bold text-orange-600 mb-1 text-center">${company.invitation_count || 0}</div>
+                                <div class="text-xs text-orange-700 font-medium text-center">Active Invitations</div>
+                            </div>
+                            <div class="flex items-center">
+                                <button class="btn btn-sm btn-info" onclick="editCompany(${company.id}, '${escapeHtml(company.name)}', '${escapeHtml(company.domain)}')">Edit</button>
+                            </div>
+                        </div>
+                        
+                        ${company.upcoming_bookings && company.upcoming_bookings.length > 0 ? `
+                            <div class="mt-4">
+                                <h5 class="text-sm font-medium text-gray-900 mb-2">Upcoming Bookings (Next 7 Days)</h5>
+                                <div class="space-y-2">
+                                    ${company.upcoming_bookings.map(booking => `
+                                        <div class="flex items-center justify-between text-xs bg-white rounded p-2 border">
+                                            <div>
+                                                <div class="font-medium text-gray-900">${escapeHtml(booking.title)}</div>
+                                                <div class="text-gray-500">${escapeHtml(booking.room_name)}</div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-gray-900">${formatDateTime(booking.start_time)}</div>
+                                                <div class="text-gray-500">${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="mt-4 text-center py-4">
+                                <p class="text-sm text-gray-500">No upcoming bookings in the next 7 days</p>
+                            </div>
+                        `}
+                    ` : `
+                        <div class="text-center py-4">
+                            <p class="text-sm text-gray-500">Statistics hidden for other companies</p>
+                        </div>
+                    `}
+                </div>
+                <div class="flex flex-col items-end space-y-2">
+                    <div class="text-xs text-gray-400">
+                        <div>Created</div>
+                        <div>${formatRelativeTime(company.created_at)}</div>
+                    </div>
+                    ${!company.is_own_company ? `
+                        <div class="flex items-center space-x-2">
+                            <button class="btn btn-sm btn-info" onclick="editCompany(${company.id}, '${escapeHtml(company.name)}', '${escapeHtml(company.domain)}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCompanyModal(${company.id}, '${escapeHtml(company.name)}')">Delete</button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+
+
+function showNotification(message, type = 'info') {
+    // You can implement your own notification system here
+    // For now, we'll use a simple alert
+    alert(message);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDateTime(dateTimeString) {
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function formatTime(dateTimeString) {
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function formatRelativeTime(dateTimeString) {
+    const date = new Date(dateTimeString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + 'm ago';
+    if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + 'h ago';
+    return Math.floor(diffInSeconds / 86400) + 'd ago';
+}
+
+// Modal functions
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+function createCompany() {
+    const form = document.getElementById('create-company-form');
+    const formData = {
+        name: form.elements['name'].value.trim(),
+        domain: form.elements['domain'].value.trim()
+    };
+
+    if (!formData.name || !formData.domain) {
+        showNotification('Please fill in all required fields for the new company', 'error');
+        return;
+    }
+
+    if (!formData.domain.includes('@')) {
+        showNotification('Domain must contain an @ symbol (e.g., @company.com)', 'error');
+        return;
+    }
+
+    fetch('/api/companies', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Company created successfully', 'success');
+            closeModal('create-company-modal');
+            loadCompaniesOverview(); // Refresh the companies list
+        } else {
+            showNotification(data.error || 'Error creating company', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error creating company', 'error');
+    });
+}
+
+function editCompany(companyId, companyName, companyDomain) {
+    document.getElementById('edit-company-id').value = companyId;
+    document.getElementById('edit-company-name').value = companyName;
+    document.getElementById('edit-company-domain').value = companyDomain;
+
+    openModal('edit-company-modal');
+}
+
+function updateCompany() {
+    const form = document.getElementById('edit-company-form');
+    const companyId = document.getElementById('edit-company-id').value;
+    const formData = {
+        name: form.elements['name'].value.trim(),
+        domain: form.elements['domain'].value.trim()
+    };
+
+    if (!formData.name || !formData.domain) {
+        showNotification('Please fill in all required fields for the company', 'error');
+        return;
+    }
+
+    if (!formData.domain.includes('@')) {
+        showNotification('Domain must contain an @ symbol (e.g., @company.com)', 'error');
+        return;
+    }
+
+    fetch(`/api/companies/${companyId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Company updated successfully', 'success');
+            closeModal('edit-company-modal');
+            loadCompaniesOverview(); // Refresh the companies list
+        } else {
+            showNotification(data.error || 'Error updating company', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error updating company', 'error');
+    });
+}
+
+function deleteCompanyModal(companyId, companyName) {
+    document.getElementById('delete-company-id').value = companyId;
+    document.getElementById('delete-company-name').textContent = companyName;
+    openModal('delete-company-modal');
+}
+
+function deleteCompany() {
+    const companyId = document.getElementById('delete-company-id').value;
+
+    fetch(`/api/companies/${companyId}`, {
+        method: 'DELETE',
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Company deleted successfully', 'success');
+            closeModal('delete-company-modal');
+            loadCompaniesOverview(); // Refresh the companies list
+        } else {
+            showNotification(data.error || 'Error deleting company', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error deleting company', 'error');
+    });
+}
+</script>
+{% endblock %} 

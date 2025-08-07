@@ -38,6 +38,14 @@ window.modalManager = {
             });
         }
         
+        // Ensure form inputs in modal are clickable
+        const formInputs = modal.querySelectorAll('input:not([type="date"]), select, textarea, button');
+        formInputs.forEach(input => {
+            input.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+        
         // Close on close button click
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.hide(modal.id));
@@ -45,7 +53,7 @@ window.modalManager = {
         
         // Close on escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
                 this.hide(modal.id);
             }
         });
@@ -59,7 +67,9 @@ window.modalManager = {
         const modal = this.modals.get(modalId);
         if (modal) {
             modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            document.body.classList.add('overflow-hidden');
         }
     },
     
@@ -70,8 +80,10 @@ window.modalManager = {
     hide: function(modalId) {
         const modal = this.modals.get(modalId);
         if (modal) {
+            modal.classList.remove('show');
             modal.classList.add('hidden');
-            document.body.style.overflow = '';
+            modal.style.display = 'none';
+            document.body.classList.remove('overflow-hidden');
         }
     },
     
@@ -80,9 +92,11 @@ window.modalManager = {
      */
     hideAll: function() {
         this.modals.forEach(modal => {
+            modal.classList.remove('show');
             modal.classList.add('hidden');
+            modal.style.display = 'none';
         });
-        document.body.style.overflow = '';
+        document.body.classList.remove('overflow-hidden');
     }
 };
 

@@ -55,10 +55,10 @@
 </div>
 
 <!-- Add/Edit Room Modal -->
-<div id="room-modal" class="modal">
+<div id="room-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-content-lg">
-        <div class="mt-3">
+        <div class="p-6">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-xl font-bold text-gray-900" id="room-modal-title">Add New Room</h3>
                 <button id="close-room-modal" class="btn-close">
@@ -84,7 +84,7 @@
                         
                         <div class="form-group">
                             <label for="room-type" class="form-label">Room Type</label>
-                            <select id="room-type" name="room_type" class="form-input form-select">
+                            <select id="room-type" name="room_type" class="form-select">
                                 <option value="">Select room type</option>
                                 <option value="conference">Conference Room</option>
                                 <option value="meeting">Meeting Room</option>
@@ -165,7 +165,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="form-group">
                             <label for="room-status" class="form-label">Status</label>
-                            <select id="room-status" name="status" class="form-input form-select">
+                            <select id="room-status" name="status" class="form-select">
                                 <option value="available">Available</option>
                                 <option value="maintenance">Under Maintenance</option>
                                 <option value="out_of_service">Out of Service</option>
@@ -173,46 +173,154 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="room-access" class="form-label">Access Level</label>
-                            <select id="room-access" name="access_level" class="form-input form-select">
-                                <option value="all">All Employees</option>
-                                <option value="managers_only">Managers Only</option>
-                                <option value="owners_only">Owners Only</option>
+                            <label for="room-access" class="form-label">Minimum Role Required</label>
+                            <select id="room-access" name="access_level" class="form-select">
+                                <option value="employee">Employee or higher</option>
+                                <option value="manager">Manager or higher</option>
+                                <option value="admin">Admin only</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label for="room-hours-start" class="form-label">Operating Hours Start</label>
-                            <input type="time" id="room-hours-start" name="operating_hours_start"
-                                   class="form-input">
+                            <label for="room-visibility" class="form-label">Company Visibility</label>
+                            <select id="room-visibility" name="visibility_type" class="form-select">
+                                <option value="company">My Company Only</option>
+                                <option value="specific_companies">Specific Companies</option>
+                                <option value="public">Public (All Companies)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="specific-companies-group" style="display: none;">
+                            <label class="form-label">Select Companies</label>
+                            <div id="companies-checkboxes" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 companies-scrollable">
+                                <!-- Companies will be loaded here dynamically -->
+                            </div>
+                        </div>
+                        <div class="form-group" id="specific-companies-placeholder" style="display: block; min-height: 120px;">
+                            <!-- This div maintains consistent spacing when specific companies is not selected -->
                         </div>
                         
                         <div class="form-group">
-                            <label for="room-hours-end" class="form-label">Operating Hours End</label>
-                            <input type="time" id="room-hours-end" name="operating_hours_end"
-                                   class="form-input">
+                            <label class="form-label">Operating Hours Start</label>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="no-restriction-start" name="no_restriction_start" class="mr-3 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    <label for="no-restriction-start" class="text-sm font-medium text-gray-700">No time restriction</label>
+                                </div>
+                                <div class="flex space-x-3" id="start-time-controls">
+                                    <div class="flex-1">
+                                        <label for="room-hours-start-hour" class="block text-sm font-medium text-gray-700 mb-1">Hour</label>
+                                        <select id="room-hours-start-hour" name="operating_hours_start_hour" class="form-select-modern">
+                                            <option value="0">12 AM</option>
+                                            <option value="1">1 AM</option>
+                                            <option value="2">2 AM</option>
+                                            <option value="3">3 AM</option>
+                                            <option value="4">4 AM</option>
+                                            <option value="5">5 AM</option>
+                                            <option value="6">6 AM</option>
+                                            <option value="7">7 AM</option>
+                                            <option value="8">8 AM</option>
+                                            <option value="9">9 AM</option>
+                                            <option value="10">10 AM</option>
+                                            <option value="11">11 AM</option>
+                                            <option value="12">12 PM</option>
+                                            <option value="13">1 PM</option>
+                                            <option value="14">2 PM</option>
+                                            <option value="15">3 PM</option>
+                                            <option value="16">4 PM</option>
+                                            <option value="17">5 PM</option>
+                                            <option value="18">6 PM</option>
+                                            <option value="19">7 PM</option>
+                                            <option value="20">8 PM</option>
+                                            <option value="21">9 PM</option>
+                                            <option value="22">10 PM</option>
+                                            <option value="23">11 PM</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label for="room-hours-start-minute" class="block text-sm font-medium text-gray-700 mb-1">Minute</label>
+                                        <select id="room-hours-start-minute" name="operating_hours_start_minute" class="form-select-modern">
+                                            <option value="0">00</option>
+                                            <option value="15">15</option>
+                                            <option value="30">30</option>
+                                            <option value="45">45</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Operating Hours End</label>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="no-restriction-end" name="no_restriction_end" class="mr-3 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    <label for="no-restriction-end" class="text-sm font-medium text-gray-700">No time restriction</label>
+                                </div>
+                                <div class="flex space-x-3" id="end-time-controls">
+                                    <div class="flex-1">
+                                        <label for="room-hours-end-hour" class="block text-sm font-medium text-gray-700 mb-1">Hour</label>
+                                        <select id="room-hours-end-hour" name="operating_hours_end_hour" class="form-select-modern">
+                                            <option value="0">12 AM</option>
+                                            <option value="1">1 AM</option>
+                                            <option value="2">2 AM</option>
+                                            <option value="3">3 AM</option>
+                                            <option value="4">4 AM</option>
+                                            <option value="5">5 AM</option>
+                                            <option value="6">6 AM</option>
+                                            <option value="7">7 AM</option>
+                                            <option value="8">8 AM</option>
+                                            <option value="9">9 AM</option>
+                                            <option value="10">10 AM</option>
+                                            <option value="11">11 AM</option>
+                                            <option value="12">12 PM</option>
+                                            <option value="13">1 PM</option>
+                                            <option value="14">2 PM</option>
+                                            <option value="15">3 PM</option>
+                                            <option value="16">4 PM</option>
+                                            <option value="17">5 PM</option>
+                                            <option value="18">6 PM</option>
+                                            <option value="19">7 PM</option>
+                                            <option value="20">8 PM</option>
+                                            <option value="21">9 PM</option>
+                                            <option value="22">10 PM</option>
+                                            <option value="23">11 PM</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label for="room-hours-end-minute" class="block text-sm font-medium text-gray-700 mb-1">Minute</label>
+                                        <select id="room-hours-end-minute" name="operating_hours_end_minute" class="form-select-modern">
+                                            <option value="0">00</option>
+                                            <option value="15">15</option>
+                                            <option value="30">30</option>
+                                            <option value="45">45</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                    <button type="button" id="cancel-room-btn" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" id="save-room-btn" class="btn btn-primary">
+                        Save Room
+                    </button>
+                </div>
             </form>
-            
-            <div class="flex justify-end space-x-3 mt-8">
-                <button type="button" id="cancel-room-btn" class="btn btn-secondary">
-                    Cancel
-                </button>
-                <button type="submit" id="save-room-btn" class="btn btn-primary">
-                    Save Room
-                </button>
-            </div>
         </div>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="modal">
+<div id="delete-modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-content">
-        <div class="mt-3">
+        <div class="p-6">
             <div class="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mx-auto mb-4">
                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
